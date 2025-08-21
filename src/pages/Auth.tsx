@@ -69,16 +69,44 @@ const Auth = () => {
   }
 
   return (
-    <div className="min-h-screen flex items-center justify-center bg-secondary/20 py-12 px-4">
-      <Card className="w-full max-w-2xl mx-auto">
-        <CardHeader className="text-center">
-          <CardTitle className="text-3xl font-bold text-primary">
-            Cooperativa de Transporte Mariscal Sucre
-          </CardTitle>
-          <CardDescription className="text-lg">
+    <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-primary/5 to-accent/5 py-12 px-4">
+      <div className="w-full max-w-6xl mx-auto grid lg:grid-cols-2 gap-8 items-center">
+        {/* Left side - Branding */}
+        <div className="hidden lg:flex flex-col items-center justify-center p-8 bg-white/80 backdrop-blur-sm rounded-2xl shadow-lg">
+          <div className="w-48 h-48 bg-primary/10 rounded-full flex items-center justify-center mb-6">
+            {/* Placeholder for cooperative shield/logo */}
+            <div className="w-32 h-32 bg-primary/20 rounded-full flex items-center justify-center">
+              <span className="text-4xl font-bold text-primary">CTS</span>
+            </div>
+          </div>
+          <h1 className="text-3xl font-bold text-primary text-center mb-4">
+            Cooperativa de Transporte<br />Mariscal Sucre
+          </h1>
+          <p className="text-lg text-muted-foreground text-center">
             Sistema de Gestión y Control
-          </CardDescription>
-        </CardHeader>
+          </p>
+          <div className="mt-8 w-full h-32 bg-gradient-to-r from-primary/10 to-accent/10 rounded-lg flex items-center justify-center">
+            {/* Placeholder for bus image */}
+            <span className="text-muted-foreground">Imagen del Bus</span>
+          </div>
+        </div>
+
+        {/* Right side - Auth Form */}
+        <Card className="w-full max-w-md mx-auto shadow-2xl border-0 bg-white/95 backdrop-blur-sm">
+          <CardHeader className="text-center pb-4">
+            <div className="lg:hidden w-20 h-20 bg-primary/10 rounded-full flex items-center justify-center mx-auto mb-4">
+              <span className="text-2xl font-bold text-primary">CTS</span>
+            </div>
+            <CardTitle className="text-2xl font-bold text-primary lg:hidden">
+              Cooperativa Mariscal Sucre
+            </CardTitle>
+            <CardTitle className="text-2xl font-bold text-primary hidden lg:block">
+              Iniciar Sesión
+            </CardTitle>
+            <CardDescription className="text-base text-muted-foreground">
+              Accede a tu cuenta del sistema
+            </CardDescription>
+          </CardHeader>
         
         <CardContent>
           <Tabs defaultValue="login" className="w-full">
@@ -273,7 +301,8 @@ const Auth = () => {
             </TabsContent>
           </Tabs>
         </CardContent>
-      </Card>
+        </Card>
+      </div>
     </div>
   );
 };
