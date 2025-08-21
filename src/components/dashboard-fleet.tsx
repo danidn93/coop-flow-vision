@@ -15,10 +15,10 @@ export function DashboardFleet() {
           <div className="grid gap-4">
             <div className="relative rounded-lg overflow-hidden bg-gradient-to-br from-primary/5 to-accent/5 p-4">
               <div className="flex items-center justify-center h-32 bg-white/50 rounded-lg">
-                <span className="text-muted-foreground text-sm">Imagen Bus 1</span>
+                <span className="text-muted-foreground text-sm">Imagen Bus Interprovincial</span>
               </div>
               <div className="mt-3">
-                <h4 className="font-semibold">Bus Ejecutivo</h4>
+                <h4 className="font-semibold">Bus Interprovincial</h4>
                 <p className="text-sm text-muted-foreground">Servicio Milagro - Guayaquil</p>
                 <Badge variant="outline" className="mt-1">En Servicio</Badge>
               </div>
@@ -29,16 +29,16 @@ export function DashboardFleet() {
 
       <Card>
         <CardHeader>
-          <CardTitle>Bus de Ruta</CardTitle>
+          <CardTitle>Bus Interprovincial</CardTitle>
         </CardHeader>
         <CardContent>
           <div className="relative rounded-lg overflow-hidden bg-gradient-to-br from-accent/5 to-primary/5 p-4">
             <div className="flex items-center justify-center h-32 bg-white/50 rounded-lg">
-              <span className="text-muted-foreground text-sm">Imagen Bus 2</span>
+              <span className="text-muted-foreground text-sm">Imagen Bus Interprovincial 2</span>
             </div>
             <div className="mt-3">
-              <h4 className="font-semibold">Bus Urbano</h4>
-              <p className="text-sm text-muted-foreground">Servicio local Milagro</p>
+              <h4 className="font-semibold">Bus de Ruta</h4>
+              <p className="text-sm text-muted-foreground">Servicio Milagro - Durán</p>
               <Badge variant="outline" className="mt-1">Disponible</Badge>
             </div>
           </div>

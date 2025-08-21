@@ -22,11 +22,6 @@ import { useAuth } from "@/hooks/useAuth";
 
 const menuItems = [
   { title: "Inicio", url: "/", icon: Home },
-  { title: "Usuarios", url: "/usuarios", icon: Users },
-  { title: "Buses", url: "/buses", icon: Bus },
-  { title: "Rutas", url: "/rutas", icon: MapPin },
-  { title: "Reportes", url: "/reportes", icon: FileText },
-  { title: "Configuración", url: "/configuracion", icon: Settings },
 ];
 
 export function AppSidebar() {
