@@ -14,6 +14,184 @@ export type Database = {
   }
   public: {
     Tables: {
+      bus_chats: {
+        Row: {
+          bus_id: string
+          created_at: string
+          driver_id: string
+          id: string
+          last_activity_at: string | null
+          owner_id: string
+          status: string
+          updated_at: string
+        }
+        Insert: {
+          bus_id: string
+          created_at?: string
+          driver_id: string
+          id?: string
+          last_activity_at?: string | null
+          owner_id: string
+          status?: string
+          updated_at?: string
+        }
+        Update: {
+          bus_id?: string
+          created_at?: string
+          driver_id?: string
+          id?: string
+          last_activity_at?: string | null
+          owner_id?: string
+          status?: string
+          updated_at?: string
+        }
+        Relationships: []
+      }
+      chat_messages: {
+        Row: {
+          bus_chat_id: string | null
+          content: string
+          created_at: string
+          id: string
+          message_type: string
+          metadata: Json | null
+          read_at: string | null
+          sender_id: string
+          thread_id: string | null
+        }
+        Insert: {
+          bus_chat_id?: string | null
+          content: string
+          created_at?: string
+          id?: string
+          message_type?: string
+          metadata?: Json | null
+          read_at?: string | null
+          sender_id: string
+          thread_id?: string | null
+        }
+        Update: {
+          bus_chat_id?: string | null
+          content?: string
+          created_at?: string
+          id?: string
+          message_type?: string
+          metadata?: Json | null
+          read_at?: string | null
+          sender_id?: string
+          thread_id?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "chat_messages_thread_id_fkey"
+            columns: ["thread_id"]
+            isOneToOne: false
+            referencedRelation: "chat_threads"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      chat_threads: {
+        Row: {
+          client_id: string
+          created_at: string
+          id: string
+          last_message_at: string | null
+          status: string
+          subject: string | null
+          updated_at: string
+        }
+        Insert: {
+          client_id: string
+          created_at?: string
+          id?: string
+          last_message_at?: string | null
+          status?: string
+          subject?: string | null
+          updated_at?: string
+        }
+        Update: {
+          client_id?: string
+          created_at?: string
+          id?: string
+          last_message_at?: string | null
+          status?: string
+          subject?: string | null
+          updated_at?: string
+        }
+        Relationships: []
+      }
+      faq_intents: {
+        Row: {
+          created_at: string
+          id: string
+          intent_name: string
+          keywords: string[]
+          param_types: Json | null
+          requires_params: boolean | null
+          response_template: string
+          updated_at: string
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          intent_name: string
+          keywords?: string[]
+          param_types?: Json | null
+          requires_params?: boolean | null
+          response_template: string
+          updated_at?: string
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          intent_name?: string
+          keywords?: string[]
+          param_types?: Json | null
+          requires_params?: boolean | null
+          response_template?: string
+          updated_at?: string
+        }
+        Relationships: []
+      }
+      incident_audit_log: {
+        Row: {
+          action: string
+          changes: Json | null
+          created_at: string
+          id: string
+          incident_id: string
+          notes: string | null
+          user_id: string
+        }
+        Insert: {
+          action: string
+          changes?: Json | null
+          created_at?: string
+          id?: string
+          incident_id: string
+          notes?: string | null
+          user_id: string
+        }
+        Update: {
+          action?: string
+          changes?: Json | null
+          created_at?: string
+          id?: string
+          incident_id?: string
+          notes?: string | null
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "incident_audit_log_incident_id_fkey"
+            columns: ["incident_id"]
+            isOneToOne: false
+            referencedRelation: "road_incidents"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       profiles: {
         Row: {
           address: string
@@ -55,6 +233,95 @@ export type Database = {
           user_id?: string
         }
         Relationships: []
+      }
+      road_incidents: {
+        Row: {
+          affected_routes: string[] | null
+          coordinates: unknown | null
+          created_at: string
+          description: string
+          id: string
+          incident_type: string
+          location_description: string
+          moderated_at: string | null
+          moderator_id: string | null
+          photos: string[] | null
+          reporter_id: string
+          resolved_at: string | null
+          severity: string
+          status: string
+          title: string
+          updated_at: string
+        }
+        Insert: {
+          affected_routes?: string[] | null
+          coordinates?: unknown | null
+          created_at?: string
+          description: string
+          id?: string
+          incident_type: string
+          location_description: string
+          moderated_at?: string | null
+          moderator_id?: string | null
+          photos?: string[] | null
+          reporter_id: string
+          resolved_at?: string | null
+          severity?: string
+          status?: string
+          title: string
+          updated_at?: string
+        }
+        Update: {
+          affected_routes?: string[] | null
+          coordinates?: unknown | null
+          created_at?: string
+          description?: string
+          id?: string
+          incident_type?: string
+          location_description?: string
+          moderated_at?: string | null
+          moderator_id?: string | null
+          photos?: string[] | null
+          reporter_id?: string
+          resolved_at?: string | null
+          severity?: string
+          status?: string
+          title?: string
+          updated_at?: string
+        }
+        Relationships: []
+      }
+      user_presence: {
+        Row: {
+          bus_chat_id: string | null
+          last_seen_at: string
+          status: string
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          bus_chat_id?: string | null
+          last_seen_at?: string
+          status?: string
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          bus_chat_id?: string | null
+          last_seen_at?: string
+          status?: string
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "user_presence_bus_chat_id_fkey"
+            columns: ["bus_chat_id"]
+            isOneToOne: false
+            referencedRelation: "bus_chats"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       user_roles: {
         Row: {
