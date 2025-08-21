@@ -1,5 +1,5 @@
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { Users, Bus, MapPin, TrendingUp } from "lucide-react";
+import { Users, Bus, MapPin } from "lucide-react";
 
 const stats = [
   {
@@ -23,18 +23,11 @@ const stats = [
     icon: MapPin,
     trend: "Estable",
   },
-  {
-    title: "Ingresos Mes",
-    value: "$45,230",
-    description: "Ingresos del mes actual",
-    icon: TrendingUp,
-    trend: "+8%",
-  },
 ];
 
 export function DashboardStats() {
   return (
-    <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
+    <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
       {stats.map((stat) => (
         <Card key={stat.title}>
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
