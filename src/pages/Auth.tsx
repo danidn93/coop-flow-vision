@@ -75,8 +75,10 @@ const Auth = () => {
         <div className="hidden lg:flex flex-col items-center justify-center p-8 bg-white/80 backdrop-blur-sm rounded-2xl shadow-lg">
           <div className="w-48 h-48 bg-primary/10 rounded-full flex items-center justify-center mb-6">
             {/* Placeholder for cooperative shield/logo */}
-            <div className="w-32 h-32 bg-primary/20 rounded-full flex items-center justify-center">
-              <span className="text-4xl font-bold text-primary">CTS</span>
+            <div className="w-32 h-32 bg-white rounded-full flex items-center justify-center shadow-lg">
+              <div className="w-28 h-28 bg-gradient-to-br from-primary to-accent rounded-full flex items-center justify-center">
+                <span className="text-2xl font-bold text-white">CTS</span>
+              </div>
             </div>
           </div>
           <h1 className="text-3xl font-bold text-primary text-center mb-4">
@@ -85,9 +87,12 @@ const Auth = () => {
           <p className="text-lg text-muted-foreground text-center">
             Sistema de Gestión y Control
           </p>
-          <div className="mt-8 w-full h-32 bg-gradient-to-r from-primary/10 to-accent/10 rounded-lg flex items-center justify-center">
-            {/* Placeholder for bus image */}
-            <span className="text-muted-foreground">Imagen del Bus</span>
+          <div className="mt-8 w-full h-32 bg-gradient-to-r from-primary/10 to-accent/10 rounded-lg flex items-center justify-center relative overflow-hidden">
+            <div className="absolute inset-0 bg-gradient-to-r from-blue-500/20 to-green-500/20"></div>
+            <div className="relative z-10 text-center">
+              <span className="text-muted-foreground text-sm font-medium">Flota Cooperativa Mariscal Sucre</span>
+              <p className="text-xs text-muted-foreground mt-1">Servicio de Transporte - Milagro</p>
+            </div>
           </div>
         </div>
 
