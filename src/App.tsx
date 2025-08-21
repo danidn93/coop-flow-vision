@@ -12,6 +12,9 @@ import Auth from "./pages/Auth";
 import Usuarios from "./pages/Usuarios";
 import Buses from "./pages/Buses";
 import Rutas from "./pages/Rutas";
+import ChatSoporte from "./pages/ChatSoporte";
+import ChatBuses from "./pages/ChatBuses";
+import Incidentes from "./pages/Incidentes";
 import Reportes from "./pages/Reportes";
 import Configuracion from "./pages/Configuracion";
 import NotFound from "./pages/NotFound";
@@ -67,6 +70,27 @@ const App = () => (
               <ProtectedRoute>
                 <DashboardLayout>
                   <Rutas />
+                </DashboardLayout>
+              </ProtectedRoute>
+            } />
+            <Route path="/chat-soporte" element={
+              <ProtectedRoute>
+                <DashboardLayout>
+                  <ChatSoporte />
+                </DashboardLayout>
+              </ProtectedRoute>
+            } />
+            <Route path="/chat-buses" element={
+              <ProtectedRoute>
+                <DashboardLayout>
+                  <ChatBuses />
+                </DashboardLayout>
+              </ProtectedRoute>
+            } />
+            <Route path="/incidentes" element={
+              <ProtectedRoute>
+                <DashboardLayout>
+                  <Incidentes />
                 </DashboardLayout>
               </ProtectedRoute>
             } />
