@@ -8,15 +8,11 @@ const Rutas = () => {
     <div className="space-y-6">
       <div className="flex items-center justify-between">
         <div>
-          <h1 className="text-3xl font-bold tracking-tight">Gestión de Rutas</h1>
+          <h1 className="text-3xl font-bold tracking-tight">Rutas Disponibles</h1>
           <p className="text-muted-foreground">
-            Administra las rutas interprovinciales de la cooperativa
+            Consulta las rutas disponibles de la cooperativa
           </p>
         </div>
-        <Button>
-          <Route className="mr-2 h-4 w-4" />
-          Nueva Ruta
-        </Button>
       </div>
 
       <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
@@ -26,7 +22,7 @@ const Rutas = () => {
             <MapPin className="h-4 w-4 text-muted-foreground" />
           </CardHeader>
           <CardContent>
-            <div className="text-2xl font-bold">8</div>
+            <div className="text-2xl font-bold">4</div>
             <p className="text-xs text-muted-foreground">
               Rutas en operación
             </p>
@@ -39,7 +35,7 @@ const Rutas = () => {
             <Clock className="h-4 w-4 text-muted-foreground" />
           </CardHeader>
           <CardContent>
-            <div className="text-2xl font-bold">96</div>
+            <div className="text-2xl font-bold">120</div>
             <p className="text-xs text-muted-foreground">
               Salidas diarias
             </p>
@@ -52,7 +48,7 @@ const Rutas = () => {
             <DollarSign className="h-4 w-4 text-muted-foreground" />
           </CardHeader>
           <CardContent>
-            <div className="text-2xl font-bold">$2.50</div>
+            <div className="text-2xl font-bold">$1.94</div>
             <p className="text-xs text-muted-foreground">
               Precio promedio
             </p>
@@ -65,7 +61,7 @@ const Rutas = () => {
             <Route className="h-4 w-4 text-muted-foreground" />
           </CardHeader>
           <CardContent>
-            <div className="text-2xl font-bold">485</div>
+            <div className="text-2xl font-bold">140</div>
             <p className="text-xs text-muted-foreground">
               Kilómetros diarios
             </p>
@@ -76,7 +72,7 @@ const Rutas = () => {
       <div className="grid gap-6">
         <Card>
           <CardHeader>
-            <CardTitle>Rutas Interprovinciales</CardTitle>
+            <CardTitle>Rutas de la Cooperativa Mariscal Sucre</CardTitle>
           </CardHeader>
           <CardContent>
             <div className="space-y-4">
@@ -92,29 +88,29 @@ const Rutas = () => {
                 },
                 { 
                   origen: "Milagro", 
-                  destino: "Durán", 
-                  distancia: "45 km", 
-                  duracion: "1h 10min", 
-                  tarifa: "$2.50", 
-                  frecuencia: "Cada 45min",
+                  destino: "Simón Bolívar", 
+                  distancia: "25 km", 
+                  duracion: "45min", 
+                  tarifa: "$1.50", 
+                  frecuencia: "Cada 20min",
                   status: "Activa" 
                 },
                 { 
                   origen: "Milagro", 
-                  destino: "Babahoyo", 
-                  distancia: "85 km", 
-                  duracion: "2h", 
-                  tarifa: "$3.50", 
-                  frecuencia: "Cada 1h",
+                  destino: "Lorenzo de Garaicoa", 
+                  distancia: "32 km", 
+                  duracion: "55min", 
+                  tarifa: "$2.00", 
+                  frecuencia: "Cada 30min",
                   status: "Activa" 
                 },
                 { 
                   origen: "Milagro", 
-                  destino: "Machala", 
-                  distancia: "120 km", 
-                  duracion: "2h 30min", 
-                  tarifa: "$4.50", 
-                  frecuencia: "Cada 2h",
+                  destino: "Mata de Plátano", 
+                  distancia: "18 km", 
+                  duracion: "35min", 
+                  tarifa: "$1.25", 
+                  frecuencia: "Cada 25min",
                   status: "Activa" 
                 }
               ].map((ruta, index) => (

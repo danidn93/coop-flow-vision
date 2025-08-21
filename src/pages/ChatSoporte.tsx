@@ -170,20 +170,45 @@ const ChatSoporte = () => {
   const processMessage = async (content: string) => {
     const lowerContent = content.toLowerCase();
     
-    // Simple FAQ bot logic
+    // Simple FAQ bot logic with updated routes
     if (lowerContent.includes('horario') || lowerContent.includes('proximo bus')) {
-      return 'Los horarios de nuestros buses son:\n• Milagro - Guayaquil: Cada 30 minutos desde 5:00 AM hasta 10:00 PM\n• Milagro - Durán: Cada 45 minutos desde 6:00 AM hasta 9:00 PM\n\nLos horarios son aproximados y pueden variar por tráfico.';
+      return 'Los horarios de nuestros buses son:\n• Milagro - Guayaquil: Cada 30 minutos desde 5:00 AM hasta 10:00 PM\n• Milagro - Simón Bolívar: Cada 20 minutos desde 5:30 AM hasta 9:30 PM\n• Milagro - Lorenzo de Garaicoa: Cada 30 minutos desde 6:00 AM hasta 8:00 PM\n• Milagro - Mata de Plátano: Cada 25 minutos desde 5:45 AM hasta 9:00 PM\n\nLos horarios son aproximados y pueden variar por tráfico.';
     }
     
     if (lowerContent.includes('precio') || lowerContent.includes('tarifa')) {
-      return 'Nuestras tarifas son:\n• Milagro - Guayaquil: $3.00\n• Milagro - Durán: $2.50\n• Milagro - Babahoyo: $3.50\n• Milagro - Machala: $4.50';
+      return 'Nuestras tarifas son:\n• Milagro - Guayaquil: $3.00\n• Milagro - Simón Bolívar: $1.50\n• Milagro - Lorenzo de Garaicoa: $2.00\n• Milagro - Mata de Plátano: $1.25';
     }
     
-    if (lowerContent.includes('tiempo') || lowerContent.includes('cuanto falta')) {
-      return 'Tiempos estimados de viaje:\n• A Guayaquil: 1 hora 30 minutos\n• A Durán: 1 hora 10 minutos\n• A Babahoyo: 2 horas\n• A Machala: 2 horas 30 minutos\n\nLos tiempos pueden variar según el tráfico.';
+    if (lowerContent.includes('tiempo') || lowerContent.includes('cuanto falta') || lowerContent.includes('eta')) {
+      return 'Tiempos estimados de viaje:\n• A Guayaquil: 1 hora 30 minutos\n• A Simón Bolívar: 45 minutos\n• A Lorenzo de Garaicoa: 55 minutos\n• A Mata de Plátano: 35 minutos\n\nLos tiempos pueden variar según el tráfico.';
     }
     
-    return 'Gracias por tu consulta. Un operador te responderá pronto. Para consultas inmediatas, puedes llamar a nuestras oficinas: (04) 2970-123';
+    if (lowerContent.includes('simon bolivar') || lowerContent.includes('simón bolívar')) {
+      return 'Ruta Milagro - Simón Bolívar:\n• Tarifa: $1.50\n• Tiempo de viaje: 45 minutos\n• Frecuencia: Cada 20 minutos\n• Primer bus: 5:30 AM\n• Último bus: 9:30 PM';
+    }
+    
+    if (lowerContent.includes('lorenzo de garaicoa') || lowerContent.includes('garaicoa')) {
+      return 'Ruta Milagro - Lorenzo de Garaicoa:\n• Tarifa: $2.00\n• Tiempo de viaje: 55 minutos\n• Frecuencia: Cada 30 minutos\n• Primer bus: 6:00 AM\n• Último bus: 8:00 PM';
+    }
+    
+    if (lowerContent.includes('mata de platano') || lowerContent.includes('mata de plátano')) {
+      return 'Ruta Milagro - Mata de Plátano:\n• Tarifa: $1.25\n• Tiempo de viaje: 35 minutos\n• Frecuencia: Cada 25 minutos\n• Primer bus: 5:45 AM\n• Último bus: 9:00 PM';
+    }
+    
+    if (lowerContent.includes('guayaquil')) {
+      return 'Ruta Milagro - Guayaquil:\n• Tarifa: $3.00\n• Tiempo de viaje: 1 hora 30 minutos\n• Frecuencia: Cada 30 minutos\n• Primer bus: 5:00 AM\n• Último bus: 10:00 PM';
+    }
+    
+    // Enhanced AI-like responses
+    if (lowerContent.includes('hola') || lowerContent.includes('buenos dias') || lowerContent.includes('buenas tardes')) {
+      return '¡Hola! Bienvenido a la Cooperativa Mariscal Sucre. Soy su asistente virtual. ¿En qué puedo ayudarle hoy?\n\nPuedo ayudarle con:\n• Horarios y frecuencias\n• Tarifas de nuestras rutas\n• Tiempos de viaje\n• Información sobre destinos';
+    }
+    
+    if (lowerContent.includes('gracias') || lowerContent.includes('thank')) {
+      return '¡De nada! Ha sido un placer ayudarle. Si tiene más consultas sobre nuestros servicios de transporte, no dude en preguntar. ¡Que tenga un buen viaje!';
+    }
+    
+    return '¡Hola! Soy el asistente virtual de la Cooperativa Mariscal Sucre. Para una respuesta más precisa, puede preguntarme sobre:\n\n🚌 Horarios y frecuencias\n💰 Tarifas de rutas\n⏱️ Tiempos de viaje\n📍 Destinos disponibles\n\nO puede contactar a nuestras oficinas: (04) 2970-123';
   };
 
   const sendMessage = async () => {

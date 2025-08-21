@@ -9,9 +9,9 @@ import { AppSidebar } from "@/components/app-sidebar";
 import { DashboardHeader } from "@/components/dashboard-header";
 import Index from "./pages/Index";
 import Auth from "./pages/Auth";
-import Usuarios from "./pages/Usuarios";
-import Buses from "./pages/Buses";
-import Rutas from "./pages/Rutas";
+import GestorUsuarios from "./pages/GestorUsuarios";
+import GestorBuses from "./pages/GestorBuses";
+import GestorRutas from "./pages/GestorRutas";
 import ChatSoporte from "./pages/ChatSoporte";
 import ChatBuses from "./pages/ChatBuses";
 import Incidentes from "./pages/Incidentes";
@@ -55,21 +55,21 @@ const App = () => (
             <Route path="/usuarios" element={
               <ProtectedRoute>
                 <DashboardLayout>
-                  <Usuarios />
+                  <GestorUsuarios />
                 </DashboardLayout>
               </ProtectedRoute>
             } />
             <Route path="/buses" element={
               <ProtectedRoute>
                 <DashboardLayout>
-                  <Buses />
+                  <GestorBuses />
                 </DashboardLayout>
               </ProtectedRoute>
             } />
             <Route path="/rutas" element={
               <ProtectedRoute>
                 <DashboardLayout>
-                  <Rutas />
+                  <GestorRutas />
                 </DashboardLayout>
               </ProtectedRoute>
             } />

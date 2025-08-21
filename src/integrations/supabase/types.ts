@@ -47,6 +47,53 @@ export type Database = {
         }
         Relationships: []
       }
+      buses: {
+        Row: {
+          alias: string | null
+          capacity: number | null
+          created_at: string
+          driver_id: string | null
+          id: string
+          owner_id: string
+          plate: string
+          route_id: string | null
+          status: string
+          updated_at: string
+        }
+        Insert: {
+          alias?: string | null
+          capacity?: number | null
+          created_at?: string
+          driver_id?: string | null
+          id?: string
+          owner_id: string
+          plate: string
+          route_id?: string | null
+          status?: string
+          updated_at?: string
+        }
+        Update: {
+          alias?: string | null
+          capacity?: number | null
+          created_at?: string
+          driver_id?: string | null
+          id?: string
+          owner_id?: string
+          plate?: string
+          route_id?: string | null
+          status?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "buses_route_fk"
+            columns: ["route_id"]
+            isOneToOne: false
+            referencedRelation: "routes"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       chat_messages: {
         Row: {
           bus_chat_id: string | null
@@ -287,6 +334,48 @@ export type Database = {
           severity?: string
           status?: string
           title?: string
+          updated_at?: string
+        }
+        Relationships: []
+      }
+      routes: {
+        Row: {
+          base_fare: number | null
+          created_at: string
+          destination: string
+          distance_km: number | null
+          duration_minutes: number | null
+          frequency_minutes: number | null
+          id: string
+          name: string
+          origin: string
+          status: string
+          updated_at: string
+        }
+        Insert: {
+          base_fare?: number | null
+          created_at?: string
+          destination: string
+          distance_km?: number | null
+          duration_minutes?: number | null
+          frequency_minutes?: number | null
+          id?: string
+          name: string
+          origin: string
+          status?: string
+          updated_at?: string
+        }
+        Update: {
+          base_fare?: number | null
+          created_at?: string
+          destination?: string
+          distance_km?: number | null
+          duration_minutes?: number | null
+          frequency_minutes?: number | null
+          id?: string
+          name?: string
+          origin?: string
+          status?: string
           updated_at?: string
         }
         Relationships: []
