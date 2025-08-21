@@ -27,10 +27,6 @@ interface ChatMessage {
   content: string;
   created_at: string;
   metadata?: any;
-  profiles?: {
-    first_name: string;
-    surname_1: string;
-  };
 }
 
 const ChatSoporte = () => {
@@ -92,18 +88,12 @@ const ChatSoporte = () => {
     try {
       const { data, error } = await supabase
         .from('chat_messages')
-        .select(`
-          *,
-          profiles!chat_messages_sender_id_fkey(first_name, surname_1)
-        `)
+        .select('id, sender_id, message_type, content, created_at, metadata')
         .eq('thread_id', threadId)
         .order('created_at', { ascending: true });
 
       if (error) throw error;
-      setMessages(data?.map(msg => ({
-        ...msg,
-        sender_profile: undefined
-      })) || []);
+      setMessages(data || []);
     } catch (error: any) {
       toast({
         title: "Error",
