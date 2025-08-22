@@ -72,16 +72,19 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
     try {
       const { data, error } = await supabase
         .from('user_roles')
-        .select('*')
-        .eq('user_id', userId)
-        .maybeSingle();
+        .select('role')
+        .eq('user_id', userId);
 
-      if (error && error.code !== 'PGRST116') {
-        console.error('Error fetching user role:', error);
+      if (error) {
+        console.error('Error fetching user roles:', error);
         return;
       }
 
-      setUserRole(data);
+      const roles = (data || []).map((r: any) => r.role);
+      const priority = ['administrator', 'manager', 'partner', 'employee', 'official', 'driver', 'client'] as const;
+      const selected = priority.find((r) => roles.includes(r)) || null;
+
+      setUserRole(selected ? { id: 'computed', user_id: userId, role: selected } as any : null);
     } catch (error) {
       console.error('Error fetching user role:', error);
     }

@@ -216,29 +216,24 @@ const GestorRutas = () => {
                 <div className="grid grid-cols-2 gap-4">
                   <div className="space-y-2">
                     <Label htmlFor="origin">Origen</Label>
-                    <Select value={formData.origin} onValueChange={(value) => setFormData({...formData, origin: value})}>
-                      <SelectTrigger>
-                        <SelectValue />
-                      </SelectTrigger>
-                      <SelectContent>
-                        <SelectItem value="Milagro">Milagro</SelectItem>
-                      </SelectContent>
-                    </Select>
+                    <Input
+                      id="origin"
+                      value={formData.origin}
+                      onChange={(e) => setFormData({ ...formData, origin: e.target.value })}
+                      placeholder="Ej: Milagro"
+                      required
+                    />
                   </div>
                   
                   <div className="space-y-2">
                     <Label htmlFor="destination">Destino</Label>
-                    <Select value={formData.destination} onValueChange={(value) => setFormData({...formData, destination: value})}>
-                      <SelectTrigger>
-                        <SelectValue placeholder="Seleccionar destino" />
-                      </SelectTrigger>
-                      <SelectContent>
-                        <SelectItem value="Guayaquil">Guayaquil</SelectItem>
-                        <SelectItem value="Simón Bolívar">Simón Bolívar</SelectItem>
-                        <SelectItem value="Lorenzo de Garaicoa">Lorenzo de Garaicoa</SelectItem>
-                        <SelectItem value="Mata de Plátano">Mata de Plátano</SelectItem>
-                      </SelectContent>
-                    </Select>
+                    <Input
+                      id="destination"
+                      value={formData.destination}
+                      onChange={(e) => setFormData({ ...formData, destination: e.target.value })}
+                      placeholder="Ej: Guayaquil"
+                      required
+                    />
                   </div>
                 </div>
                 
