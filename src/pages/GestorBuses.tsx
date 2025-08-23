@@ -122,8 +122,8 @@ const GestorBuses = () => {
     const submitData = {
       ...formData,
       owner_id: formData.owner_id || user?.id,
-      driver_id: formData.driver_id || null,
-      route_id: formData.route_id || null
+      driver_id: formData.driver_id === 'unassigned' ? null : formData.driver_id || null,
+      route_id: formData.route_id === 'none' ? null : formData.route_id || null
     };
     
     try {
@@ -173,8 +173,8 @@ const GestorBuses = () => {
       capacity: bus.capacity || 45,
       status: bus.status,
       owner_id: bus.owner_id,
-      driver_id: bus.driver_id || '',
-      route_id: bus.route_id || ''
+      driver_id: bus.driver_id || 'unassigned',
+      route_id: bus.route_id || 'none'
     });
     setIsDialogOpen(true);
   };
@@ -212,8 +212,8 @@ const GestorBuses = () => {
       capacity: 45,
       status: 'en_servicio',
       owner_id: '',
-      driver_id: '',
-      route_id: ''
+      driver_id: 'unassigned',
+      route_id: 'none'
     });
   };
 
@@ -324,7 +324,7 @@ const GestorBuses = () => {
                       <SelectValue placeholder="Seleccionar conductor" />
                     </SelectTrigger>
                     <SelectContent>
-                      <SelectItem value="">Sin asignar</SelectItem>
+                      <SelectItem value="unassigned">Sin asignar</SelectItem>
                       {users.map((user) => (
                         <SelectItem key={user.user_id} value={user.user_id}>
                           {user.first_name} {user.surname_1}
@@ -341,7 +341,7 @@ const GestorBuses = () => {
                       <SelectValue placeholder="Seleccionar ruta" />
                     </SelectTrigger>
                     <SelectContent>
-                      <SelectItem value="">Sin ruta asignada</SelectItem>
+                      <SelectItem value="none">Sin ruta asignada</SelectItem>
                       {routes.map((route) => (
                         <SelectItem key={route.id} value={route.id}>
                           {route.name} → {route.destination}
