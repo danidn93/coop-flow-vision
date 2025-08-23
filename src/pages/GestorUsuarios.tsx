@@ -21,6 +21,9 @@ interface UserProfile {
   phone: string;
   address: string;
   created_at: string;
+  user_roles?: {
+    role: string;
+  } | null;
 }
 
 const GestorUsuarios = () => {
@@ -55,13 +58,31 @@ const GestorUsuarios = () => {
 
   const loadUsers = async () => {
     try {
-      const { data, error } = await supabase
+      // First, get all profiles
+      const { data: profilesData, error: profilesError } = await supabase
         .from('profiles')
-        .select('user_id, first_name, surname_1, surname_2, id_number, phone, address, created_at')
+        .select('user_id, first_name, middle_name, surname_1, surname_2, id_number, phone, address, created_at')
         .order('created_at', { ascending: false });
 
-      if (error) throw error;
-      setUsers(data as UserProfile[] || []);
+      if (profilesError) throw profilesError;
+
+      // Then, get all user roles
+      const { data: rolesData, error: rolesError } = await supabase
+        .from('user_roles')
+        .select('user_id, role');
+
+      if (rolesError) throw rolesError;
+
+      // Combine the data
+      const usersWithRoles = (profilesData || []).map(profile => {
+        const userRole = rolesData?.find(role => role.user_id === profile.user_id);
+        return {
+          ...profile,
+          user_roles: userRole ? { role: userRole.role } : null
+        };
+      });
+
+      setUsers(usersWithRoles as UserProfile[]);
     } catch (error: any) {
       toast({
         title: "Error",
@@ -232,7 +253,13 @@ const GestorUsuarios = () => {
       client: 0
     };
 
-    // Since we simplified the interface, we'll just show total count for now
+    users.forEach(user => {
+      const role = user.user_roles?.role;
+      if (role && role in stats) {
+        stats[role as keyof typeof stats]++;
+      }
+    });
+
     return stats;
   };
 
@@ -504,8 +531,11 @@ const GestorUsuarios = () => {
                   <p className="text-sm text-muted-foreground">Dirección</p>
                 </div>
                 <div>
-                  <Badge variant="secondary" className="text-xs">
-                    Cliente
+                  <Badge 
+                    variant={getRoleBadgeVariant(user.user_roles?.role || 'client')} 
+                    className="text-xs"
+                  >
+                    {getRoleDisplayName(user.user_roles?.role || 'client')}
                   </Badge>
                 </div>
                 <div className="flex justify-end">
