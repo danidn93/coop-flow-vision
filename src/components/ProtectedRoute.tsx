@@ -22,7 +22,9 @@ const ProtectedRoute = ({ children, allowedRoles }: ProtectedRouteProps) => {
     return <Navigate to="/auth" replace />;
   }
 
-  if (allowedRoles && userRole && !allowedRoles.includes(userRole.role)) {
+  // Only check role restrictions if both allowedRoles and userRole exist
+  if (allowedRoles && allowedRoles.length > 0 && userRole && !allowedRoles.includes(userRole.role)) {
+    console.log('Access denied - User role:', userRole.role, 'Allowed roles:', allowedRoles);
     return (
       <div className="min-h-screen flex items-center justify-center">
         <div className="text-center">
@@ -31,6 +33,9 @@ const ProtectedRoute = ({ children, allowedRoles }: ProtectedRouteProps) => {
           </h1>
           <p className="text-muted-foreground">
             No tienes permisos para acceder a esta página.
+          </p>
+          <p className="text-sm text-muted-foreground mt-2">
+            Rol actual: {userRole.role}
           </p>
         </div>
       </div>

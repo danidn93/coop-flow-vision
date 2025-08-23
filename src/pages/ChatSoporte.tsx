@@ -170,45 +170,64 @@ const ChatSoporte = () => {
   const processMessage = async (content: string) => {
     const lowerContent = content.toLowerCase();
     
-    // Simple FAQ bot logic with updated routes
-    if (lowerContent.includes('horario') || lowerContent.includes('proximo bus')) {
-      return 'Los horarios de nuestros buses son:\n• Milagro - Guayaquil: Cada 30 minutos desde 5:00 AM hasta 10:00 PM\n• Milagro - Simón Bolívar: Cada 20 minutos desde 5:30 AM hasta 9:30 PM\n• Milagro - Lorenzo de Garaicoa: Cada 30 minutos desde 6:00 AM hasta 8:00 PM\n• Milagro - Mata de Plátano: Cada 25 minutos desde 5:45 AM hasta 9:00 PM\n\nLos horarios son aproximados y pueden variar por tráfico.';
+    // Enhanced AI-like responses with context awareness
+    if (lowerContent.includes('horario') || lowerContent.includes('proximo bus') || lowerContent.includes('cuando sale')) {
+      const currentHour = new Date().getHours();
+      let timeContext = '';
+      if (currentHour < 12) timeContext = 'Buenos días. ';
+      else if (currentHour < 18) timeContext = 'Buenas tardes. ';
+      else timeContext = 'Buenas noches. ';
+      
+      return `${timeContext}Aquí tienes los horarios de nuestras rutas:\n\n🚌 **Milagro - Guayaquil**\n• Cada 30 minutos\n• 5:00 AM - 10:00 PM\n\n🚌 **Milagro - Simón Bolívar**\n• Cada 20 minutos\n• 5:30 AM - 9:30 PM\n\n🚌 **Milagro - Lorenzo de Garaicoa**\n• Cada 30 minutos\n• 6:00 AM - 8:00 PM\n\n🚌 **Milagro - Mata de Plátano**\n• Cada 25 minutos\n• 5:45 AM - 9:00 PM\n\n⚠️ Los horarios pueden variar por condiciones de tráfico.`;
     }
     
-    if (lowerContent.includes('precio') || lowerContent.includes('tarifa')) {
-      return 'Nuestras tarifas son:\n• Milagro - Guayaquil: $3.00\n• Milagro - Simón Bolívar: $1.50\n• Milagro - Lorenzo de Garaicoa: $2.00\n• Milagro - Mata de Plátano: $1.25';
+    if (lowerContent.includes('precio') || lowerContent.includes('tarifa') || lowerContent.includes('cuesta') || lowerContent.includes('vale')) {
+      return '💰 **Tarifas actuales de nuestras rutas:**\n\n• **Milagro ↔ Guayaquil**: $3.00\n• **Milagro ↔ Simón Bolívar**: $1.50\n• **Milagro ↔ Lorenzo de Garaicoa**: $2.00\n• **Milagro ↔ Mata de Plátano**: $1.25\n\n📝 *Tarifas sujetas a regulación municipal*\n💳 Aceptamos efectivo y tarjetas de débito';
     }
     
-    if (lowerContent.includes('tiempo') || lowerContent.includes('cuanto falta') || lowerContent.includes('eta')) {
-      return 'Tiempos estimados de viaje:\n• A Guayaquil: 1 hora 30 minutos\n• A Simón Bolívar: 45 minutos\n• A Lorenzo de Garaicoa: 55 minutos\n• A Mata de Plátano: 35 minutos\n\nLos tiempos pueden variar según el tráfico.';
+    if (lowerContent.includes('tiempo') || lowerContent.includes('cuanto') || lowerContent.includes('duracion') || lowerContent.includes('demora')) {
+      return '⏱️ **Tiempos estimados de viaje:**\n\n🕐 **A Guayaquil**: 1h 30min\n🕐 **A Simón Bolívar**: 45 minutos\n🕐 **A Lorenzo de Garaicoa**: 55 minutos\n🕐 **A Mata de Plátano**: 35 minutos\n\n⚠️ *Los tiempos pueden variar según:*\n• Condiciones del tráfico\n• Hora del día\n• Condiciones climáticas\n• Paradas intermedias';
     }
     
     if (lowerContent.includes('simon bolivar') || lowerContent.includes('simón bolívar')) {
-      return 'Ruta Milagro - Simón Bolívar:\n• Tarifa: $1.50\n• Tiempo de viaje: 45 minutos\n• Frecuencia: Cada 20 minutos\n• Primer bus: 5:30 AM\n• Último bus: 9:30 PM';
+      return '🚌 **Ruta Milagro - Simón Bolívar**\n\n💰 **Tarifa**: $1.50\n⏱️ **Tiempo**: 45 minutos\n🕐 **Frecuencia**: Cada 20 minutos\n🌅 **Primer bus**: 5:30 AM\n🌙 **Último bus**: 9:30 PM\n\n📍 **Paradas principales:**\n• Terminal Milagro\n• Centro de Milagro\n• Puente Simón Bolívar\n• Terminal Simón Bolívar';
     }
     
     if (lowerContent.includes('lorenzo de garaicoa') || lowerContent.includes('garaicoa')) {
-      return 'Ruta Milagro - Lorenzo de Garaicoa:\n• Tarifa: $2.00\n• Tiempo de viaje: 55 minutos\n• Frecuencia: Cada 30 minutos\n• Primer bus: 6:00 AM\n• Último bus: 8:00 PM';
+      return '🚌 **Ruta Milagro - Lorenzo de Garaicoa**\n\n💰 **Tarifa**: $2.00\n⏱️ **Tiempo**: 55 minutos\n🕐 **Frecuencia**: Cada 30 minutos\n🌅 **Primer bus**: 6:00 AM\n🌙 **Último bus**: 8:00 PM\n\n📍 **Información adicional:**\n• Servicio con aire acondicionado\n• Buses en excelente estado\n• Conductores certificados';
     }
     
     if (lowerContent.includes('mata de platano') || lowerContent.includes('mata de plátano')) {
-      return 'Ruta Milagro - Mata de Plátano:\n• Tarifa: $1.25\n• Tiempo de viaje: 35 minutos\n• Frecuencia: Cada 25 minutos\n• Primer bus: 5:45 AM\n• Último bus: 9:00 PM';
+      return '🚌 **Ruta Milagro - Mata de Plátano**\n\n💰 **Tarifa**: $1.25\n⏱️ **Tiempo**: 35 minutos\n🕐 **Frecuencia**: Cada 25 minutos\n🌅 **Primer bus**: 5:45 AM\n🌙 **Último bus**: 9:00 PM\n\n🌿 **Ruta escénica** que pasa por zonas agrícolas\n🚐 Buses cómodos y seguros';
     }
     
     if (lowerContent.includes('guayaquil')) {
-      return 'Ruta Milagro - Guayaquil:\n• Tarifa: $3.00\n• Tiempo de viaje: 1 hora 30 minutos\n• Frecuencia: Cada 30 minutos\n• Primer bus: 5:00 AM\n• Último bus: 10:00 PM';
+      return '🚌 **Ruta Milagro - Guayaquil**\n\n💰 **Tarifa**: $3.00\n⏱️ **Tiempo**: 1h 30min\n🕐 **Frecuencia**: Cada 30 minutos\n🌅 **Primer bus**: 5:00 AM\n🌙 **Último bus**: 10:00 PM\n\n🏙️ **Nuestra ruta más popular**\n📍 Llegada: Terminal Terrestre de Guayaquil\n❄️ Buses con aire acondicionado\n📱 WiFi disponible en algunos buses';
     }
     
-    // Enhanced AI-like responses
-    if (lowerContent.includes('hola') || lowerContent.includes('buenos dias') || lowerContent.includes('buenas tardes')) {
-      return '¡Hola! Bienvenido a la Cooperativa Mariscal Sucre. Soy su asistente virtual. ¿En qué puedo ayudarle hoy?\n\nPuedo ayudarle con:\n• Horarios y frecuencias\n• Tarifas de nuestras rutas\n• Tiempos de viaje\n• Información sobre destinos';
+    if (lowerContent.includes('hola') || lowerContent.includes('buenos dias') || lowerContent.includes('buenas tardes') || lowerContent.includes('buenas noches')) {
+      const currentHour = new Date().getHours();
+      let greeting = '';
+      if (currentHour < 12) greeting = '🌅 ¡Buenos días!';
+      else if (currentHour < 18) greeting = '☀️ ¡Buenas tardes!';
+      else greeting = '🌙 ¡Buenas noches!';
+      
+      return `${greeting} Bienvenido/a a la **Cooperativa Mariscal Sucre**.\n\n🤖 Soy su asistente virtual inteligente. Estoy aquí para ayudarle con:\n\n🚌 **Horarios y frecuencias**\n💰 **Tarifas actualizadas**\n⏱️ **Tiempos de viaje**\n📍 **Información de rutas**\n🎫 **Reservas y consultas**\n\n¿En qué puedo ayudarle hoy?`;
     }
     
     if (lowerContent.includes('gracias') || lowerContent.includes('thank')) {
-      return '¡De nada! Ha sido un placer ayudarle. Si tiene más consultas sobre nuestros servicios de transporte, no dude en preguntar. ¡Que tenga un buen viaje!';
+      return '🙏 ¡De nada! Ha sido un placer ayudarle.\n\n😊 Si necesita más información sobre nuestros servicios, no dude en preguntar.\n\n🚌 ¡Que tenga un excelente viaje con la Cooperativa Mariscal Sucre!\n\n📞 Para emergencias: (04) 2970-123';
     }
     
-    return '¡Hola! Soy el asistente virtual de la Cooperativa Mariscal Sucre. Para una respuesta más precisa, puede preguntarme sobre:\n\n🚌 Horarios y frecuencias\n💰 Tarifas de rutas\n⏱️ Tiempos de viaje\n📍 Destinos disponibles\n\nO puede contactar a nuestras oficinas: (04) 2970-123';
+    if (lowerContent.includes('problema') || lowerContent.includes('queja') || lowerContent.includes('reclamo')) {
+      return '😔 Lamento escuchar que ha tenido un inconveniente.\n\n📝 **Para reportar problemas:**\n• Puede llamar a: (04) 2970-123\n• Visitar nuestras oficinas en horario de atención\n• Usar nuestro sistema de chat para detalles específicos\n\n🚨 **Para emergencias**: Comuníquese inmediatamente con nuestro despachador\n\n¡Su comodidad y seguridad son nuestra prioridad!';
+    }
+    
+    if (lowerContent.includes('covid') || lowerContent.includes('bioseguridad') || lowerContent.includes('sanitario')) {
+      return '🦠 **Protocolos de Bioseguridad COVID-19**\n\n✅ **Medidas implementadas:**\n• Desinfección diaria de buses\n• Ventilación constante\n• Uso obligatorio de mascarilla\n• Gel antibacterial disponible\n• Distanciamiento recomendado\n\n🏥 Priorizamos la salud de nuestros pasajeros y personal.\n\n⚠️ *Sujeto a regulaciones sanitarias vigentes*';
+    }
+    
+    return '🤖 ¡Hola! Soy el **asistente virtual inteligente** de la Cooperativa Mariscal Sucre.\n\n💡 **Para brindarle la mejor respuesta, puede preguntarme sobre:**\n\n🚌 Horarios de buses\n💰 Tarifas y precios\n⏱️ Tiempos de viaje\n📍 Rutas disponibles\n🎫 Información de reservas\n🚨 Reportar problemas\n\n📞 **Contacto directo**: (04) 2970-123\n🏢 **Oficinas**: Lunes a Viernes 8:00 AM - 5:00 PM\n\n¿En qué más puedo ayudarle?';
   };
 
   const sendMessage = async () => {
