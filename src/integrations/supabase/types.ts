@@ -54,6 +54,7 @@ export type Database = {
           created_at: string
           driver_id: string | null
           id: string
+          image_url: string | null
           owner_id: string
           plate: string
           route_id: string | null
@@ -66,6 +67,7 @@ export type Database = {
           created_at?: string
           driver_id?: string | null
           id?: string
+          image_url?: string | null
           owner_id: string
           plate: string
           route_id?: string | null
@@ -78,6 +80,7 @@ export type Database = {
           created_at?: string
           driver_id?: string | null
           id?: string
+          image_url?: string | null
           owner_id?: string
           plate?: string
           route_id?: string | null
@@ -168,6 +171,48 @@ export type Database = {
         }
         Relationships: []
       }
+      cooperative_config: {
+        Row: {
+          address: string | null
+          created_at: string
+          email: string | null
+          id: string
+          logo_url: string | null
+          max_daily_tickets: number
+          name: string
+          phone: string | null
+          reward_points_per_ticket: number
+          ruc: string | null
+          updated_at: string
+        }
+        Insert: {
+          address?: string | null
+          created_at?: string
+          email?: string | null
+          id?: string
+          logo_url?: string | null
+          max_daily_tickets?: number
+          name?: string
+          phone?: string | null
+          reward_points_per_ticket?: number
+          ruc?: string | null
+          updated_at?: string
+        }
+        Update: {
+          address?: string | null
+          created_at?: string
+          email?: string | null
+          id?: string
+          logo_url?: string | null
+          max_daily_tickets?: number
+          name?: string
+          phone?: string | null
+          reward_points_per_ticket?: number
+          ruc?: string | null
+          updated_at?: string
+        }
+        Relationships: []
+      }
       faq_intents: {
         Row: {
           created_at: string
@@ -242,6 +287,7 @@ export type Database = {
       profiles: {
         Row: {
           address: string
+          avatar_url: string | null
           created_at: string
           first_name: string
           id: string
@@ -255,6 +301,7 @@ export type Database = {
         }
         Insert: {
           address: string
+          avatar_url?: string | null
           created_at?: string
           first_name: string
           id?: string
@@ -268,6 +315,7 @@ export type Database = {
         }
         Update: {
           address?: string
+          avatar_url?: string | null
           created_at?: string
           first_name?: string
           id?: string
@@ -278,6 +326,77 @@ export type Database = {
           surname_2?: string | null
           updated_at?: string
           user_id?: string
+        }
+        Relationships: []
+      }
+      reward_redemptions: {
+        Row: {
+          created_at: string
+          id: string
+          points_used: number
+          redeemed_at: string | null
+          reward_id: string
+          status: string
+          user_id: string
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          points_used: number
+          redeemed_at?: string | null
+          reward_id: string
+          status?: string
+          user_id: string
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          points_used?: number
+          redeemed_at?: string | null
+          reward_id?: string
+          status?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "reward_redemptions_reward_id_fkey"
+            columns: ["reward_id"]
+            isOneToOne: false
+            referencedRelation: "rewards"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      rewards: {
+        Row: {
+          created_at: string
+          description: string | null
+          id: string
+          image_url: string | null
+          is_active: boolean | null
+          name: string
+          points_required: number
+          updated_at: string
+        }
+        Insert: {
+          created_at?: string
+          description?: string | null
+          id?: string
+          image_url?: string | null
+          is_active?: boolean | null
+          name: string
+          points_required: number
+          updated_at?: string
+        }
+        Update: {
+          created_at?: string
+          description?: string | null
+          id?: string
+          image_url?: string | null
+          is_active?: boolean | null
+          name?: string
+          points_required?: number
+          updated_at?: string
         }
         Relationships: []
       }
@@ -338,6 +457,63 @@ export type Database = {
         }
         Relationships: []
       }
+      route_frequencies: {
+        Row: {
+          arrival_time: string
+          assigned_bus_id: string | null
+          created_at: string
+          departure_time: string
+          frequency_number: number
+          id: string
+          is_first_turn: boolean | null
+          is_last_turn: boolean | null
+          route_id: string
+          status: string
+          updated_at: string
+        }
+        Insert: {
+          arrival_time: string
+          assigned_bus_id?: string | null
+          created_at?: string
+          departure_time: string
+          frequency_number: number
+          id?: string
+          is_first_turn?: boolean | null
+          is_last_turn?: boolean | null
+          route_id: string
+          status?: string
+          updated_at?: string
+        }
+        Update: {
+          arrival_time?: string
+          assigned_bus_id?: string | null
+          created_at?: string
+          departure_time?: string
+          frequency_number?: number
+          id?: string
+          is_first_turn?: boolean | null
+          is_last_turn?: boolean | null
+          route_id?: string
+          status?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "route_frequencies_assigned_bus_id_fkey"
+            columns: ["assigned_bus_id"]
+            isOneToOne: false
+            referencedRelation: "buses"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "route_frequencies_route_id_fkey"
+            columns: ["route_id"]
+            isOneToOne: false
+            referencedRelation: "routes"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       routes: {
         Row: {
           base_fare: number | null
@@ -347,6 +523,7 @@ export type Database = {
           duration_minutes: number | null
           frequency_minutes: number | null
           id: string
+          image_url: string | null
           name: string
           origin: string
           status: string
@@ -360,6 +537,7 @@ export type Database = {
           duration_minutes?: number | null
           frequency_minutes?: number | null
           id?: string
+          image_url?: string | null
           name: string
           origin: string
           status?: string
@@ -373,10 +551,41 @@ export type Database = {
           duration_minutes?: number | null
           frequency_minutes?: number | null
           id?: string
+          image_url?: string | null
           name?: string
           origin?: string
           status?: string
           updated_at?: string
+        }
+        Relationships: []
+      }
+      user_points: {
+        Row: {
+          created_at: string
+          id: string
+          last_ticket_date: string | null
+          tickets_today: number
+          total_points: number
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          last_ticket_date?: string | null
+          tickets_today?: number
+          total_points?: number
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          last_ticket_date?: string | null
+          tickets_today?: number
+          total_points?: number
+          updated_at?: string
+          user_id?: string
         }
         Relationships: []
       }
@@ -433,11 +642,64 @@ export type Database = {
         }
         Relationships: []
       }
+      user_tickets: {
+        Row: {
+          created_at: string
+          id: string
+          points_earned: number
+          route_id: string
+          ticket_image_url: string
+          user_id: string
+          validated: boolean | null
+          validated_at: string | null
+          validated_by: string | null
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          points_earned?: number
+          route_id: string
+          ticket_image_url: string
+          user_id: string
+          validated?: boolean | null
+          validated_at?: string | null
+          validated_by?: string | null
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          points_earned?: number
+          route_id?: string
+          ticket_image_url?: string
+          user_id?: string
+          validated?: boolean | null
+          validated_at?: string | null
+          validated_by?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "user_tickets_route_id_fkey"
+            columns: ["route_id"]
+            isOneToOne: false
+            referencedRelation: "routes"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
     }
     Views: {
       [_ in never]: never
     }
     Functions: {
+      generate_route_frequencies: {
+        Args: {
+          p_end_time?: string
+          p_frequency_minutes: number
+          p_route_id: string
+          p_start_time?: string
+        }
+        Returns: undefined
+      }
       get_current_user_role: {
         Args: Record<PropertyKey, never>
         Returns: Database["public"]["Enums"]["app_role"]
