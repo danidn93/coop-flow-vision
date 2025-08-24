@@ -6,10 +6,11 @@ import { Badge } from "@/components/ui/badge";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
 import { Label } from "@/components/ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { supabase } from '@/integrations/supabase/client';
 import { useToast } from '@/hooks/use-toast';
 import { useAuth } from '@/hooks/useAuth';
-import { Route, Plus, Edit, Trash2 } from "lucide-react";
+import { Route, Plus, Edit, Trash2, Clock, Bus, Upload, Eye } from "lucide-react";
 
 interface RouteData {
   id: string;
@@ -21,16 +22,34 @@ interface RouteData {
   base_fare: number;
   frequency_minutes: number;
   status: string;
+  image_url?: string;
   created_at: string;
+}
+
+interface RouteFrequency {
+  id: string;
+  route_id: string;
+  departure_time: string;
+  arrival_time: string;
+  frequency_number: number;
+  is_first_turn: boolean;
+  is_last_turn: boolean;
+  assigned_bus_id?: string;
+  status: string;
 }
 
 const GestorRutas = () => {
   const { toast } = useToast();
   const { userRole } = useAuth();
   const [routes, setRoutes] = useState<RouteData[]>([]);
+  const [frequencies, setFrequencies] = useState<RouteFrequency[]>([]);
+  const [buses, setBuses] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
   const [isDialogOpen, setIsDialogOpen] = useState(false);
+  const [isFrequencyDialogOpen, setIsFrequencyDialogOpen] = useState(false);
   const [editingRoute, setEditingRoute] = useState<RouteData | null>(null);
+  const [selectedRoute, setSelectedRoute] = useState<RouteData | null>(null);
+  const [imageFile, setImageFile] = useState<File | null>(null);
   const [formData, setFormData] = useState({
     name: '',
     origin: 'Milagro',
@@ -44,6 +63,7 @@ const GestorRutas = () => {
 
   useEffect(() => {
     loadRoutes();
+    loadBuses();
   }, []);
 
   const canManageRoutes = userRole && ['administrator', 'manager', 'partner'].includes(userRole.role);
@@ -68,14 +88,99 @@ const GestorRutas = () => {
     }
   };
 
+  const loadBuses = async () => {
+    try {
+      const { data, error } = await supabase
+        .from('buses')
+        .select('*')
+        .eq('status', 'en_servicio');
+
+      if (error) throw error;
+      setBuses(data || []);
+    } catch (error: any) {
+      console.error('Error loading buses:', error);
+    }
+  };
+
+  const loadFrequencies = async (routeId: string) => {
+    try {
+      const { data, error } = await supabase
+        .from('route_frequencies')
+        .select(`
+          *,
+          buses!assigned_bus_id(id, alias, plate)
+        `)
+        .eq('route_id', routeId)
+        .order('frequency_number');
+
+      if (error) throw error;
+      setFrequencies(data || []);
+    } catch (error: any) {
+      console.error('Error loading frequencies:', error);
+    }
+  };
+
+  const uploadRouteImage = async (file: File, routeId: string) => {
+    try {
+      const fileExt = file.name.split('.').pop();
+      const fileName = `${routeId}.${fileExt}`;
+      const filePath = `routes/${fileName}`;
+
+      const { error: uploadError } = await supabase.storage
+        .from('routes')
+        .upload(filePath, file, { upsert: true });
+
+      if (uploadError) throw uploadError;
+
+      const { data: { publicUrl } } = supabase.storage
+        .from('routes')
+        .getPublicUrl(filePath);
+
+      return publicUrl;
+    } catch (error: any) {
+      throw error;
+    }
+  };
+
+  const generateFrequencies = async (routeId: string, frequencyMinutes: number) => {
+    try {
+      const { error } = await supabase.rpc('generate_route_frequencies', {
+        p_route_id: routeId,
+        p_frequency_minutes: frequencyMinutes,
+        p_start_time: '05:00',
+        p_end_time: '22:00'
+      });
+
+      if (error) throw error;
+
+      toast({
+        title: "Éxito",
+        description: "Frecuencias generadas correctamente",
+      });
+    } catch (error: any) {
+      toast({
+        title: "Error",
+        description: "No se pudieron generar las frecuencias",
+        variant: "destructive",
+      });
+    }
+  };
+
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     
     try {
       if (editingRoute) {
+        let updateData: any = { ...formData };
+        
+        if (imageFile) {
+          const imageUrl = await uploadRouteImage(imageFile, editingRoute.id);
+          updateData.image_url = imageUrl;
+        }
+
         const { error } = await supabase
           .from('routes')
-          .update(formData)
+          .update(updateData)
           .eq('id', editingRoute.id);
         
         if (error) throw error;
@@ -85,20 +190,37 @@ const GestorRutas = () => {
           description: "Ruta actualizada correctamente",
         });
       } else {
-        const { error } = await supabase
+        const { data, error } = await supabase
           .from('routes')
-          .insert([formData]);
+          .insert([formData])
+          .select()
+          .single();
         
         if (error) throw error;
+
+        // Upload image if provided
+        if (imageFile && data) {
+          const imageUrl = await uploadRouteImage(imageFile, data.id);
+          await supabase
+            .from('routes')
+            .update({ image_url: imageUrl })
+            .eq('id', data.id);
+        }
+
+        // Generate frequencies automatically
+        if (data) {
+          await generateFrequencies(data.id, formData.frequency_minutes);
+        }
         
         toast({
           title: "Éxito",
-          description: "Ruta creada correctamente",
+          description: "Ruta creada correctamente con frecuencias automáticas",
         });
       }
       
       setIsDialogOpen(false);
       setEditingRoute(null);
+      setImageFile(null);
       resetForm();
       loadRoutes();
     } catch (error: any) {
@@ -300,6 +422,21 @@ const GestorRutas = () => {
                     </SelectContent>
                   </Select>
                 </div>
+
+                <div className="space-y-2">
+                  <Label htmlFor="image">Imagen de la Ruta</Label>
+                  <input
+                    type="file"
+                    accept="image/*"
+                    onChange={(e) => setImageFile(e.target.files?.[0] || null)}
+                    className="w-full p-2 border rounded"
+                  />
+                  {editingRoute?.image_url && (
+                    <div className="text-sm text-muted-foreground">
+                      Imagen actual: {editingRoute.image_url.split('/').pop()}
+                    </div>
+                  )}
+                </div>
                 
                 <div className="flex justify-end gap-2">
                   <Button type="button" variant="outline" onClick={() => setIsDialogOpen(false)}>
@@ -315,81 +452,171 @@ const GestorRutas = () => {
         )}
       </div>
 
-      <Card>
-        <CardHeader>
-          <CardTitle className="flex items-center gap-2">
-            <Route className="h-5 w-5" />
-            Rutas Registradas ({routes.length})
-          </CardTitle>
-        </CardHeader>
-        <CardContent>
-          <div className="space-y-4">
-            {routes.map((route) => (
-              <div key={route.id} className="grid grid-cols-2 md:grid-cols-7 gap-4 p-4 border rounded-lg items-center">
-                <div>
-                  <h4 className="font-semibold">{route.origin}</h4>
-                  <p className="text-sm text-muted-foreground">Origen</p>
-                </div>
-                <div>
-                  <h4 className="font-semibold">{route.destination}</h4>
-                  <p className="text-sm text-muted-foreground">Destino</p>
-                </div>
-                <div>
-                  <p className="font-medium">{route.distance_km} km</p>
-                  <p className="text-sm text-muted-foreground">Distancia</p>
-                </div>
-                <div>
-                  <p className="font-medium">{Math.floor(route.duration_minutes / 60)}h {route.duration_minutes % 60}min</p>
-                  <p className="text-sm text-muted-foreground">Duración</p>
-                </div>
-                <div>
-                  <p className="font-medium">${route.base_fare}</p>
-                  <p className="text-sm text-muted-foreground">Tarifa</p>
-                </div>
-                <div>
-                  <p className="font-medium">Cada {route.frequency_minutes}min</p>
-                  <p className="text-sm text-muted-foreground">Frecuencia</p>
-                </div>
-                <div className="flex items-center gap-2">
-                  <Badge 
-                    variant={route.status === 'active' ? 'default' : 'secondary'}
-                    className="text-xs"
-                  >
-                    {route.status === 'active' ? 'Activa' : 
-                     route.status === 'inactive' ? 'Inactiva' : 'Mantenimiento'}
-                  </Badge>
-                  {canManageRoutes && (
-                    <div className="flex gap-1">
-                      <Button
-                        size="sm"
-                        variant="ghost"
-                        onClick={() => handleEdit(route)}
-                      >
-                        <Edit className="h-4 w-4" />
-                      </Button>
-                      <Button
-                        size="sm"
-                        variant="ghost"
-                        onClick={() => handleDelete(route.id)}
-                        className="text-destructive hover:text-destructive"
-                      >
-                        <Trash2 className="h-4 w-4" />
-                      </Button>
+      <Tabs defaultValue="routes" className="space-y-4">
+        <TabsList>
+          <TabsTrigger value="routes">Rutas</TabsTrigger>
+          <TabsTrigger value="frequencies">Ver Frecuencias</TabsTrigger>
+        </TabsList>
+
+        <TabsContent value="routes">
+          <Card>
+            <CardHeader>
+              <CardTitle className="flex items-center gap-2">
+                <Route className="h-5 w-5" />
+                Rutas Registradas ({routes.length})
+              </CardTitle>
+            </CardHeader>
+            <CardContent>
+              <div className="space-y-4">
+                {routes.map((route) => (
+                  <div key={route.id} className="grid grid-cols-2 md:grid-cols-8 gap-4 p-4 border rounded-lg items-center">
+                    {route.image_url && (
+                      <div className="w-16 h-16 rounded overflow-hidden">
+                        <img 
+                          src={route.image_url} 
+                          alt={route.name}
+                          className="w-full h-full object-cover"
+                        />
+                      </div>
+                    )}
+                    <div className={route.image_url ? '' : 'col-span-1'}>
+                      <h4 className="font-semibold">{route.origin}</h4>
+                      <p className="text-sm text-muted-foreground">Origen</p>
                     </div>
-                  )}
-                </div>
+                    <div>
+                      <h4 className="font-semibold">{route.destination}</h4>
+                      <p className="text-sm text-muted-foreground">Destino</p>
+                    </div>
+                    <div>
+                      <p className="font-medium">{route.distance_km} km</p>
+                      <p className="text-sm text-muted-foreground">Distancia</p>
+                    </div>
+                    <div>
+                      <p className="font-medium">{Math.floor(route.duration_minutes / 60)}h {route.duration_minutes % 60}min</p>
+                      <p className="text-sm text-muted-foreground">Duración</p>
+                    </div>
+                    <div>
+                      <p className="font-medium">${route.base_fare}</p>
+                      <p className="text-sm text-muted-foreground">Tarifa</p>
+                    </div>
+                    <div>
+                      <p className="font-medium">Cada {route.frequency_minutes}min</p>
+                      <p className="text-sm text-muted-foreground">Frecuencia</p>
+                    </div>
+                    <div className="flex items-center gap-2">
+                      <Badge 
+                        variant={route.status === 'active' ? 'default' : 'secondary'}
+                        className="text-xs"
+                      >
+                        {route.status === 'active' ? 'Activa' : 
+                         route.status === 'inactive' ? 'Inactiva' : 'Mantenimiento'}
+                      </Badge>
+                      {canManageRoutes && (
+                        <div className="flex gap-1">
+                          <Button
+                            size="sm"
+                            variant="ghost"
+                            onClick={() => {
+                              setSelectedRoute(route);
+                              loadFrequencies(route.id);
+                              setIsFrequencyDialogOpen(true);
+                            }}
+                          >
+                            <Clock className="h-4 w-4" />
+                          </Button>
+                          <Button
+                            size="sm"
+                            variant="ghost"
+                            onClick={() => handleEdit(route)}
+                          >
+                            <Edit className="h-4 w-4" />
+                          </Button>
+                          <Button
+                            size="sm"
+                            variant="ghost"
+                            onClick={() => handleDelete(route.id)}
+                            className="text-destructive hover:text-destructive"
+                          >
+                            <Trash2 className="h-4 w-4" />
+                          </Button>
+                        </div>
+                      )}
+                    </div>
+                  </div>
+                ))}
+                {routes.length === 0 && (
+                  <div className="text-center py-8 text-muted-foreground">
+                    No hay rutas registradas.
+                    {canManageRoutes && <br />}
+                    {canManageRoutes && 'Crea una nueva ruta para comenzar.'}
+                  </div>
+                )}
               </div>
-            ))}
-            {routes.length === 0 && (
+            </CardContent>
+          </Card>
+        </TabsContent>
+
+        <TabsContent value="frequencies">
+          <Card>
+            <CardHeader>
+              <CardTitle className="flex items-center gap-2">
+                <Clock className="h-5 w-5" />
+                Frecuencias por Ruta
+              </CardTitle>
+            </CardHeader>
+            <CardContent>
               <div className="text-center py-8 text-muted-foreground">
-                No hay rutas registradas.
-                {canManageRoutes && <br />}
-                {canManageRoutes && 'Crea una nueva ruta para comenzar.'}
+                <Clock className="h-12 w-12 mx-auto mb-4" />
+                <p>Selecciona una ruta desde la pestaña "Rutas" para ver sus frecuencias y asignar buses.</p>
               </div>
-            )}
+            </CardContent>
+          </Card>
+        </TabsContent>
+      </Tabs>
+
+      {/* Frequency Management Dialog */}
+      <Dialog open={isFrequencyDialogOpen} onOpenChange={setIsFrequencyDialogOpen}>
+        <DialogContent className="max-w-4xl">
+          <DialogHeader>
+            <DialogTitle>
+              Frecuencias - {selectedRoute?.origin} → {selectedRoute?.destination}
+            </DialogTitle>
+          </DialogHeader>
+          <div className="space-y-4">
+            <div className="grid gap-4">
+              {frequencies.map((frequency) => (
+                <div key={frequency.id} className="flex items-center justify-between p-3 border rounded-lg">
+                  <div className="flex items-center space-x-4">
+                    <Badge variant={frequency.is_first_turn ? 'default' : frequency.is_last_turn ? 'secondary' : 'outline'}>
+                      {frequency.is_first_turn ? 'Primer Turno' : 
+                       frequency.is_last_turn ? 'Último Turno' : 
+                       `Freq. ${frequency.frequency_number}`}
+                    </Badge>
+                    <div className="flex items-center space-x-2">
+                      <span className="font-medium">{frequency.departure_time.slice(0, 5)}</span>
+                      <span>→</span>
+                      <span className="font-medium">{frequency.arrival_time.slice(0, 5)}</span>
+                    </div>
+                    {frequency.assigned_bus_id ? (
+                      <div className="flex items-center space-x-2">
+                        <Bus className="h-4 w-4 text-muted-foreground" />
+                        <span className="text-sm">Bus asignado</span>
+                      </div>
+                    ) : (
+                      <span className="text-sm text-muted-foreground">Sin asignar</span>
+                    )}
+                  </div>
+                </div>
+              ))}
+              {frequencies.length === 0 && (
+                <div className="text-center py-8 text-muted-foreground">
+                  No hay frecuencias configuradas para esta ruta.
+                </div>
+              )}
+            </div>
           </div>
-        </CardContent>
-      </Card>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 };

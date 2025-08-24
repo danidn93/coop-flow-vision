@@ -75,22 +75,15 @@ const statusColors = {
   'cerrado': 'secondary'
 };
 
-const availableRoutes = [
-  'Milagro - Guayaquil',
-  'Milagro - Durán', 
-  'Milagro - Babahoyo',
-  'Milagro - Machala',
-  'Guayaquil - Milagro',
-  'Durán - Milagro',
-  'Babahoyo - Milagro',
-  'Machala - Milagro'
-];
+// This will be loaded from Supabase
+let availableRoutes: any[] = [];
 
 const Incidentes = () => {
   const { user, userRole } = useAuth();
   const { toast } = useToast();
   const [incidents, setIncidents] = useState<RoadIncident[]>([]);
   const [filteredIncidents, setFilteredIncidents] = useState<RoadIncident[]>([]);
+  const [routes, setRoutes] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
   const [showCreateDialog, setShowCreateDialog] = useState(false);
   const [selectedIncident, setSelectedIncident] = useState<RoadIncident | null>(null);
@@ -116,6 +109,7 @@ const Incidentes = () => {
 
   useEffect(() => {
     loadIncidents();
+    loadRoutes();
     setupRealtimeSubscription();
   }, []);
 
@@ -144,6 +138,22 @@ const Incidentes = () => {
       });
     } finally {
       setLoading(false);
+    }
+  };
+
+  const loadRoutes = async () => {
+    try {
+      const { data, error } = await supabase
+        .from('routes')
+        .select('id, name, origin, destination')
+        .eq('status', 'active')
+        .order('name');
+
+      if (error) throw error;
+      setRoutes(data || []);
+      availableRoutes = data || [];
+    } catch (error: any) {
+      console.error('Error loading routes:', error);
     }
   };
 
@@ -408,14 +418,14 @@ const Incidentes = () => {
                 <div>
                   <Label>Rutas Afectadas</Label>
                   <div className="grid grid-cols-2 gap-2 mt-2">
-                    {availableRoutes.map(route => (
-                      <label key={route} className="flex items-center space-x-2">
+                    {routes.map(route => (
+                      <label key={route.id} className="flex items-center space-x-2">
                         <input
                           type="checkbox"
-                          checked={newIncident.affected_routes.includes(route)}
-                          onChange={(e) => handleRouteChange(route, e.target.checked)}
+                          checked={newIncident.affected_routes.includes(route.id)}
+                          onChange={(e) => handleRouteChange(route.id, e.target.checked)}
                         />
-                        <span className="text-sm">{route}</span>
+                        <span className="text-sm">{route.origin} - {route.destination}</span>
                       </label>
                     ))}
                   </div>
