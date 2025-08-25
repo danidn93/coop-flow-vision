@@ -104,7 +104,7 @@ const App = () => (
                 </DashboardLayout>
               </ProtectedRoute>
             } />
-            <Route path="/frecuencias" element={
+            <Route path="/gestor-frecuencias" element={
               <ProtectedRoute>
                 <DashboardLayout>
                   <GestorFrecuencias />
