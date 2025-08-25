@@ -12,6 +12,9 @@ import Auth from "./pages/Auth";
 import GestorUsuarios from "./pages/GestorUsuarios";
 import GestorBuses from "./pages/GestorBuses";
 import GestorRutas from "./pages/GestorRutas";
+import GestorFrecuencias from "./pages/GestorFrecuencias";
+import Recompensas from "./pages/Recompensas";
+import ConfiguracionCooperativa from "./pages/ConfiguracionCooperativa";
 import ChatSoporte from "./pages/ChatSoporte";
 import ChatBuses from "./pages/ChatBuses";
 import Incidentes from "./pages/Incidentes";
@@ -98,6 +101,27 @@ const App = () => (
               <ProtectedRoute>
                 <DashboardLayout>
                   <Reportes />
+                </DashboardLayout>
+              </ProtectedRoute>
+            } />
+            <Route path="/frecuencias" element={
+              <ProtectedRoute>
+                <DashboardLayout>
+                  <GestorFrecuencias />
+                </DashboardLayout>
+              </ProtectedRoute>
+            } />
+            <Route path="/recompensas" element={
+              <ProtectedRoute>
+                <DashboardLayout>
+                  <Recompensas />
+                </DashboardLayout>
+              </ProtectedRoute>
+            } />
+            <Route path="/configuracion-cooperativa" element={
+              <ProtectedRoute>
+                <DashboardLayout>
+                  <ConfiguracionCooperativa />
                 </DashboardLayout>
               </ProtectedRoute>
             } />
