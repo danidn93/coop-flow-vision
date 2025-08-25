@@ -13,6 +13,7 @@ interface Profile {
   id_number: string;
   phone: string;
   address: string;
+  avatar_url?: string;
 }
 
 interface UserRole {
