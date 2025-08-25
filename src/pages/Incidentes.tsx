@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
@@ -9,10 +9,10 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
 import { useAuth } from '@/hooks/useAuth';
 import { supabase } from '@/integrations/supabase/client';
-import { useToast } from '@/components/ui/use-toast';
+import { useToast } from '@/hooks/use-toast';
 import { 
   AlertTriangle, Plus, Eye, CheckCircle, X, Camera, 
-  MapPin, Clock, User, Filter, Search
+  MapPin, Clock, User, Filter, Search, Upload, Trash2
 } from "lucide-react";
 import { format } from 'date-fns';
 import { es } from 'date-fns/locale';
@@ -50,6 +50,7 @@ interface IncidentForm {
   location_description: string;
   severity: 'baja' | 'media' | 'alta' | 'critica';
   affected_routes: string[];
+  photos: string[];
 }
 
 const incidentTypes = {
@@ -96,8 +97,11 @@ const Incidentes = () => {
     description: '',
     location_description: '',
     severity: 'media',
-    affected_routes: []
+    affected_routes: [],
+    photos: []
   });
+  const [uploading, setUploading] = useState(false);
+  const fileInputRef = useRef<HTMLInputElement>(null);
 
   const canCreateIncident = userRole?.role === 'driver' || 
                            userRole?.role === 'official' || 
@@ -237,7 +241,8 @@ const Incidentes = () => {
         description: '',
         location_description: '',
         severity: 'media',
-        affected_routes: []
+        affected_routes: [],
+        photos: []
       });
     } catch (error: any) {
       toast({
@@ -309,18 +314,65 @@ const Incidentes = () => {
     return statusText[status as keyof typeof statusText] || status;
   };
 
-  const handleRouteChange = (route: string, checked: boolean) => {
-    if (checked) {
+  const handleRouteChange = (routeId: string, checked: boolean) => {
+    setNewIncident(prev => ({
+      ...prev,
+      affected_routes: checked 
+        ? [...prev.affected_routes, routeId]
+        : prev.affected_routes.filter(id => id !== routeId)
+    }));
+  };
+
+  const handlePhotoUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const files = e.target.files;
+    if (!files || files.length === 0 || !user) return;
+
+    setUploading(true);
+    try {
+      const uploadPromises = Array.from(files).map(async (file) => {
+        const fileExt = file.name.split('.').pop();
+        const fileName = `${user.id}/${Date.now()}_${Math.random().toString(36).substring(2)}.${fileExt}`;
+        
+        const { error: uploadError } = await supabase.storage
+          .from('incident-photos')
+          .upload(fileName, file);
+
+        if (uploadError) throw uploadError;
+
+        const { data } = supabase.storage
+          .from('incident-photos')
+          .getPublicUrl(fileName);
+
+        return data.publicUrl;
+      });
+
+      const photoUrls = await Promise.all(uploadPromises);
+      
       setNewIncident(prev => ({
         ...prev,
-        affected_routes: [...prev.affected_routes, route]
+        photos: [...prev.photos, ...photoUrls]
       }));
-    } else {
-      setNewIncident(prev => ({
-        ...prev,
-        affected_routes: prev.affected_routes.filter(r => r !== route)
-      }));
+
+      toast({
+        title: "Éxito",
+        description: `${photoUrls.length} foto(s) subida(s) correctamente`,
+      });
+    } catch (error: any) {
+      toast({
+        title: "Error",
+        description: "No se pudieron subir las fotos",
+        variant: "destructive",
+      });
+    } finally {
+      setUploading(false);
     }
+  };
+
+  const removePhoto = (photoUrl: string) => {
+    setNewIncident(prev => ({
+      ...prev,
+      photos: prev.photos.filter(url => url !== photoUrl)
+    }));
   };
 
   if (loading) {
@@ -428,6 +480,58 @@ const Incidentes = () => {
                         <span className="text-sm">{route.origin} - {route.destination}</span>
                       </label>
                     ))}
+                  </div>
+                </div>
+
+                <div>
+                  <Label>Fotos del Incidente (Opcional)</Label>
+                  <div className="space-y-3 mt-2">
+                    <div className="flex items-center gap-2">
+                      <input
+                        ref={fileInputRef}
+                        type="file"
+                        accept="image/*"
+                        multiple
+                        className="hidden"
+                        onChange={handlePhotoUpload}
+                      />
+                      <Button
+                        type="button"
+                        variant="outline"
+                        size="sm"
+                        onClick={() => fileInputRef.current?.click()}
+                        disabled={uploading}
+                      >
+                        <Upload className="mr-2 h-4 w-4" />
+                        {uploading ? 'Subiendo...' : 'Agregar Fotos'}
+                      </Button>
+                      <span className="text-xs text-muted-foreground">
+                        Máximo 5 fotos
+                      </span>
+                    </div>
+                    
+                    {newIncident.photos.length > 0 && (
+                      <div className="grid grid-cols-3 gap-2">
+                        {newIncident.photos.map((photo, index) => (
+                          <div key={index} className="relative group">
+                            <img
+                              src={photo}
+                              alt={`Foto ${index + 1}`}
+                              className="w-full h-20 object-cover rounded border"
+                            />
+                            <Button
+                              type="button"
+                              size="sm"
+                              variant="destructive"
+                              className="absolute -top-2 -right-2 h-6 w-6 p-0 opacity-0 group-hover:opacity-100 transition-opacity"
+                              onClick={() => removePhoto(photo)}
+                            >
+                              <Trash2 className="h-3 w-3" />
+                            </Button>
+                          </div>
+                        ))}
+                      </div>
+                    )}
                   </div>
                 </div>
 
