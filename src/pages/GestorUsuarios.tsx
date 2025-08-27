@@ -98,35 +98,29 @@ const GestorUsuarios = () => {
     e.preventDefault();
     
     try {
-      // Create user through Supabase Auth
-      const { data: authData, error: authError } = await supabase.auth.signUp({
-        email: formData.email,
-        password: formData.password,
-        options: {
-          data: {
-            first_name: formData.first_name,
-            middle_name: formData.middle_name,
-            surname_1: formData.surname_1,
-            surname_2: formData.surname_2,
-            id_number: formData.id_number,
-            phone: formData.phone,
-            address: formData.address
-          }
+      // Use admin signup function to avoid email confirmation and handle duplicates
+      const { data, error } = await supabase.functions.invoke('admin-signup', {
+        body: {
+          email: formData.email,
+          password: formData.password,
+          first_name: formData.first_name,
+          middle_name: formData.middle_name,
+          surname_1: formData.surname_1,
+          surname_2: formData.surname_2,
+          id_number: formData.id_number,
+          phone: formData.phone,
+          address: formData.address,
+          role: formData.role
         }
       });
 
-      if (authError) throw authError;
+      if (error) {
+        throw new Error(error.message || 'Error al crear el usuario');
+      }
 
-      if (authData.user) {
-        // Assign role
-        const { error: roleError } = await supabase
-          .from('user_roles')
-          .insert({
-            user_id: authData.user.id,
-            role: formData.role as any
-          });
-
-        if (roleError) throw roleError;
+      // Check if the response contains an error from the function
+      if (data?.error) {
+        throw new Error(data.error);
       }
       
       toast({
