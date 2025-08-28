@@ -55,6 +55,7 @@ export type Database = {
           driver_id: string | null
           id: string
           image_url: string | null
+          official_id: string | null
           owner_id: string
           plate: string
           route_id: string | null
@@ -68,6 +69,7 @@ export type Database = {
           driver_id?: string | null
           id?: string
           image_url?: string | null
+          official_id?: string | null
           owner_id: string
           plate: string
           route_id?: string | null
@@ -81,6 +83,7 @@ export type Database = {
           driver_id?: string | null
           id?: string
           image_url?: string | null
+          official_id?: string | null
           owner_id?: string
           plate?: string
           route_id?: string | null
@@ -284,6 +287,39 @@ export type Database = {
           },
         ]
       }
+      notifications: {
+        Row: {
+          created_at: string
+          id: string
+          message: string
+          metadata: Json
+          read_at: string | null
+          title: string
+          type: string
+          user_id: string
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          message: string
+          metadata?: Json
+          read_at?: string | null
+          title: string
+          type: string
+          user_id: string
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          message?: string
+          metadata?: Json
+          read_at?: string | null
+          title?: string
+          type?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
       profiles: {
         Row: {
           address: string
@@ -467,6 +503,8 @@ export type Database = {
           id: string
           is_first_turn: boolean | null
           is_last_turn: boolean | null
+          passengers_count: number
+          revenue: number
           route_id: string
           status: string
           updated_at: string
@@ -480,6 +518,8 @@ export type Database = {
           id?: string
           is_first_turn?: boolean | null
           is_last_turn?: boolean | null
+          passengers_count?: number
+          revenue?: number
           route_id: string
           status?: string
           updated_at?: string
@@ -493,6 +533,8 @@ export type Database = {
           id?: string
           is_first_turn?: boolean | null
           is_last_turn?: boolean | null
+          passengers_count?: number
+          revenue?: number
           route_id?: string
           status?: string
           updated_at?: string
@@ -691,6 +733,16 @@ export type Database = {
       [_ in never]: never
     }
     Functions: {
+      create_notification: {
+        Args: {
+          p_message: string
+          p_metadata?: Json
+          p_title: string
+          p_type: string
+          p_user_id: string
+        }
+        Returns: undefined
+      }
       generate_route_frequencies: {
         Args: {
           p_end_time?: string

@@ -19,6 +19,7 @@ interface BusData {
   status: string;
   owner_id: string;
   driver_id: string | null;
+  official_id: string | null;
   route_id: string | null;
   created_at: string;
   routes?: {
@@ -37,6 +38,7 @@ interface UserOption {
   user_id: string;
   first_name: string;
   surname_1: string;
+  role?: string;
 }
 
 const GestorBuses = () => {
@@ -45,6 +47,9 @@ const GestorBuses = () => {
   const [buses, setBuses] = useState<BusData[]>([]);
   const [routes, setRoutes] = useState<RouteOption[]>([]);
   const [users, setUsers] = useState<UserOption[]>([]);
+  const [partners, setPartners] = useState<UserOption[]>([]);
+  const [drivers, setDrivers] = useState<UserOption[]>([]);
+  const [officials, setOfficials] = useState<UserOption[]>([]);
   const [loading, setLoading] = useState(true);
   const [isDialogOpen, setIsDialogOpen] = useState(false);
   const [editingBus, setEditingBus] = useState<BusData | null>(null);
@@ -55,6 +60,7 @@ const GestorBuses = () => {
     status: 'en_servicio',
     owner_id: '',
     driver_id: '',
+    official_id: '',
     route_id: ''
   });
 
@@ -71,7 +77,7 @@ const GestorBuses = () => {
       const { data, error } = await supabase
         .from('buses')
         .select(`
-          id, plate, alias, capacity, status, owner_id, driver_id, route_id, created_at,
+          id, plate, alias, capacity, status, owner_id, driver_id, official_id, route_id, created_at,
           routes(name, destination)
         `)
         .order('created_at', { ascending: false });
@@ -105,12 +111,32 @@ const GestorBuses = () => {
 
   const loadUsers = async () => {
     try {
-      const { data, error } = await supabase
+      // Load all profiles with roles
+      const { data: profilesData, error: profilesError } = await supabase
         .from('profiles')
         .select('user_id, first_name, surname_1');
 
-      if (error) throw error;
-      setUsers(data || []);
+      if (profilesError) throw profilesError;
+
+      const { data: rolesData, error: rolesError } = await supabase
+        .from('user_roles')
+        .select('user_id, role');
+
+      if (rolesError) throw rolesError;
+
+      // Combine profiles with roles
+      const usersWithRoles = (profilesData || []).map(profile => {
+        const userRole = rolesData?.find(role => role.user_id === profile.user_id);
+        return {
+          ...profile,
+          role: userRole?.role || 'client'
+        };
+      });
+
+      setUsers(usersWithRoles);
+      setPartners(usersWithRoles.filter(user => user.role === 'partner'));
+      setDrivers(usersWithRoles.filter(user => user.role === 'driver'));
+      setOfficials(usersWithRoles.filter(user => user.role === 'official'));
     } catch (error: any) {
       console.error('Error loading users:', error);
     }
@@ -123,6 +149,7 @@ const GestorBuses = () => {
       ...formData,
       owner_id: formData.owner_id || user?.id,
       driver_id: formData.driver_id === 'unassigned' ? null : formData.driver_id || null,
+      official_id: formData.official_id === 'unassigned' ? null : formData.official_id || null,
       route_id: formData.route_id === 'none' ? null : formData.route_id || null
     };
     
@@ -174,6 +201,7 @@ const GestorBuses = () => {
       status: bus.status,
       owner_id: bus.owner_id,
       driver_id: bus.driver_id || 'unassigned',
+      official_id: bus.official_id || 'unassigned',
       route_id: bus.route_id || 'none'
     });
     setIsDialogOpen(true);
@@ -213,6 +241,7 @@ const GestorBuses = () => {
       status: 'en_servicio',
       owner_id: '',
       driver_id: 'unassigned',
+      official_id: 'unassigned',
       route_id: 'none'
     });
   };
@@ -302,15 +331,15 @@ const GestorBuses = () => {
                 </div>
                 
                 <div className="space-y-2">
-                  <Label htmlFor="owner">Propietario</Label>
+                  <Label htmlFor="owner">Propietario (Socio)</Label>
                   <Select value={formData.owner_id} onValueChange={(value) => setFormData({...formData, owner_id: value})}>
                     <SelectTrigger>
                       <SelectValue placeholder="Seleccionar propietario" />
                     </SelectTrigger>
                     <SelectContent>
-                      {users.map((user) => (
-                        <SelectItem key={user.user_id} value={user.user_id}>
-                          {user.first_name} {user.surname_1}
+                      {partners.map((partner) => (
+                        <SelectItem key={partner.user_id} value={partner.user_id}>
+                          {partner.first_name} {partner.surname_1}
                         </SelectItem>
                       ))}
                     </SelectContent>
@@ -325,9 +354,26 @@ const GestorBuses = () => {
                     </SelectTrigger>
                     <SelectContent>
                       <SelectItem value="unassigned">Sin asignar</SelectItem>
-                      {users.map((user) => (
-                        <SelectItem key={user.user_id} value={user.user_id}>
-                          {user.first_name} {user.surname_1}
+                      {drivers.map((driver) => (
+                        <SelectItem key={driver.user_id} value={driver.user_id}>
+                          {driver.first_name} {driver.surname_1}
+                        </SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                </div>
+                
+                <div className="space-y-2">
+                  <Label htmlFor="official">Oficial</Label>
+                  <Select value={formData.official_id} onValueChange={(value) => setFormData({...formData, official_id: value})}>
+                    <SelectTrigger>
+                      <SelectValue placeholder="Seleccionar oficial" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="unassigned">Sin asignar</SelectItem>
+                      {officials.map((official) => (
+                        <SelectItem key={official.user_id} value={official.user_id}>
+                          {official.first_name} {official.surname_1}
                         </SelectItem>
                       ))}
                     </SelectContent>
@@ -450,7 +496,7 @@ const GestorBuses = () => {
         <CardContent>
           <div className="space-y-4">
             {buses.map((bus) => (
-              <div key={bus.id} className="grid grid-cols-1 md:grid-cols-6 gap-4 p-4 border rounded-lg items-center">
+              <div key={bus.id} className="grid grid-cols-1 md:grid-cols-7 gap-4 p-4 border rounded-lg items-center">
                 <div>
                   <h4 className="font-semibold">{bus.plate}</h4>
                   <p className="text-sm text-muted-foreground">
@@ -473,6 +519,12 @@ const GestorBuses = () => {
                     {bus.driver_id ? `Conductor: ${bus.driver_id.slice(0, 8)}...` : 'Sin conductor'}
                   </p>
                   <p className="text-sm text-muted-foreground">Conductor</p>
+                </div>
+                <div>
+                  <p className="font-medium">
+                    {bus.official_id ? `Oficial: ${bus.official_id.slice(0, 8)}...` : 'Sin oficial'}
+                  </p>
+                  <p className="text-sm text-muted-foreground">Oficial</p>
                 </div>
                 <div>
                   <p className="font-medium">
