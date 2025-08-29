@@ -124,10 +124,50 @@ serve(async (req) => {
         const { data: existingUser } = await supabaseAdmin.auth.admin.getUserByEmail(userData.email);
         
         if (existingUser.user) {
+          const user = existingUser.user;
+
+          // Ensure credentials and metadata are up to date
+          await supabaseAdmin.auth.admin.updateUserById(user.id, {
+            password: userData.password,
+            email_confirm: true,
+            user_metadata: {
+              first_name: userData.first_name,
+              middle_name: userData.middle_name,
+              surname_1: userData.surname_1,
+              surname_2: userData.surname_2,
+              id_number: userData.id_number,
+              phone: userData.phone,
+              address: userData.address
+            }
+          });
+
+          // Upsert profile and role
+          await supabaseAdmin
+            .from('profiles')
+            .upsert({
+              user_id: user.id,
+              first_name: userData.first_name,
+              middle_name: userData.middle_name,
+              surname_1: userData.surname_1,
+              surname_2: userData.surname_2,
+              id_number: userData.id_number,
+              phone: userData.phone,
+              address: userData.address
+            }, { onConflict: 'user_id' });
+
+          await supabaseAdmin
+            .from('user_roles')
+            .upsert({ user_id: user.id, role: userData.role }, { onConflict: 'user_id,role' });
+
           results.push({
             email: userData.email,
-            status: 'already_exists',
-            message: 'Usuario ya existe'
+            status: 'updated',
+            message: 'Usuario existente actualizado',
+            credentials: {
+              email: userData.email,
+              password: userData.password,
+              role: userData.role
+            }
           });
           continue;
         }

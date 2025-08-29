@@ -15,12 +15,7 @@ export function DashboardFleet() {
     try {
       const { data, error } = await supabase
         .from('buses')
-        .select(`
-          *,
-          profiles:owner_id(first_name, surname_1),
-          driver_profile:driver_id(first_name, surname_1),
-          official_profile:official_id(first_name, surname_1)
-        `)
+        .select(`*`)
         .eq('status', 'en_servicio')
         .limit(4);
 
@@ -82,14 +77,7 @@ export function DashboardFleet() {
                 </div>
                 <div>
                   <h4 className="font-semibold">{bus.alias || bus.plate}</h4>
-                  <p className="text-sm text-muted-foreground">
-                    {bus.profiles ? `Propietario: ${bus.profiles.first_name} ${bus.profiles.surname_1}` : 'Sin propietario'}
-                  </p>
-                  {bus.driver_profile && (
-                    <p className="text-xs text-muted-foreground">
-                      Conductor: {bus.driver_profile.first_name} {bus.driver_profile.surname_1}
-                    </p>
-                  )}
+                  <p className="text-sm text-muted-foreground">Placa: {bus.plate}</p>
                   <Badge variant="outline" className="mt-1">En Servicio</Badge>
                 </div>
               </div>
