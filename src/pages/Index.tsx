@@ -1,7 +1,12 @@
 import { DashboardStats } from '@/components/dashboard-stats';
 import { DashboardFleet } from '@/components/dashboard-fleet';
+import { CreateTestUsersButton } from '@/components/create-test-users-button';
+import { useAuth } from '@/hooks/useAuth';
 
 const Index = () => {
+  const { userRole } = useAuth();
+  const isAdmin = userRole?.role === 'administrator';
+
   return (
     <>
       <div className="flex items-center justify-between space-y-2">
@@ -9,6 +14,7 @@ const Index = () => {
       </div>
       <DashboardStats />
       <DashboardFleet />
+      {isAdmin && <CreateTestUsersButton />}
     </>
   );
 };

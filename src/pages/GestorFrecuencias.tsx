@@ -100,6 +100,7 @@ const GestorFrecuencias = () => {
           buses(id, alias, plate)
         `)
         .eq('route_id', routeId)
+        .neq('status', 'cancelled')
         .order('frequency_number');
 
       if (error) throw error;
@@ -166,6 +167,98 @@ const GestorFrecuencias = () => {
       toast({
         title: "Error",
         description: "No se pudo desasignar el bus",
+        variant: "destructive",
+      });
+    }
+  };
+
+  const cancelFrequency = async (frequencyId: string) => {
+    try {
+      // Get current frequency and previous frequency
+      const currentFreq = frequencies.find(f => f.id === frequencyId);
+      if (!currentFreq) return;
+
+      const previousFreq = frequencies.find(f => 
+        f.frequency_number === currentFreq.frequency_number - 1
+      );
+
+      // Cancel current frequency
+      const { error: cancelError } = await supabase
+        .from('route_frequencies')
+        .update({ status: 'cancelled' })
+        .eq('id', frequencyId);
+
+      if (cancelError) throw cancelError;
+
+      // If there's a previous frequency, add 5 minutes to its arrival time
+      if (previousFreq) {
+        const currentArrival = new Date(`2000-01-01T${previousFreq.arrival_time}`);
+        currentArrival.setMinutes(currentArrival.getMinutes() + 5);
+        const newArrivalTime = currentArrival.toTimeString().slice(0, 8);
+
+        const { error: updateError } = await supabase
+          .from('route_frequencies')
+          .update({ arrival_time: newArrivalTime })
+          .eq('id', previousFreq.id);
+
+        if (updateError) throw updateError;
+
+        // Send notifications if previous frequency has assigned bus
+        if (previousFreq.assigned_bus_id) {
+          const { data: busData } = await supabase
+            .from('buses')
+            .select('*, profiles:owner_id(first_name, surname_1)')
+            .eq('id', previousFreq.assigned_bus_id)
+            .single();
+
+          if (busData) {
+            const message = `Tu tiempo de ruta ha sido extendido 5 minutos debido a la cancelación de una frecuencia.`;
+            
+            // Notify driver
+            if (busData.driver_id) {
+              await supabase.rpc('create_notification', {
+                p_user_id: busData.driver_id,
+                p_title: 'Extensión de Tiempo',
+                p_message: message,
+                p_type: 'time_extension'
+              });
+            }
+
+            // Notify official
+            if (busData.official_id) {
+              await supabase.rpc('create_notification', {
+                p_user_id: busData.official_id,
+                p_title: 'Extensión de Tiempo',
+                p_message: message,
+                p_type: 'time_extension'
+              });
+            }
+
+            // Notify owner
+            if (busData.owner_id) {
+              await supabase.rpc('create_notification', {
+                p_user_id: busData.owner_id,
+                p_title: 'Extensión de Tiempo',
+                p_message: message,
+                p_type: 'time_extension'
+              });
+            }
+          }
+        }
+      }
+
+      toast({
+        title: "Éxito",
+        description: "Frecuencia cancelada correctamente",
+      });
+
+      if (selectedRoute) {
+        loadFrequencies(selectedRoute);
+      }
+    } catch (error: any) {
+      toast({
+        title: "Error",
+        description: "No se pudo cancelar la frecuencia",
         variant: "destructive",
       });
     }
@@ -268,8 +361,15 @@ const GestorFrecuencias = () => {
                         )}
                       </div>
 
-                      {canManage && (
+                       {canManage && (
                         <div className="flex gap-2">
+                          <Button
+                            size="sm"
+                            variant="destructive"
+                            onClick={() => cancelFrequency(frequency.id)}
+                          >
+                            Cancelar
+                          </Button>
                           {frequency.buses ? (
                             <Button
                               size="sm"
