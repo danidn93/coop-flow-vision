@@ -74,15 +74,14 @@ const ConfiguracionCooperativa = () => {
 
   const loadData = async () => {
     try {
-      // Load cooperative config
       const { data: configData, error: configError } = await supabase
         .from('cooperative_config')
         .select('*')
-        .single();
+        .order('updated_at', { ascending: false })
+        .limit(1)
+        .maybeSingle();
 
-      if (configError && configError.code !== 'PGRST116') {
-        throw configError;
-      }
+      if (configError) throw configError;
 
       // Load rewards
       const { data: rewardsData, error: rewardsError } = await supabase
@@ -171,12 +170,21 @@ const ConfiguracionCooperativa = () => {
         const logoUrl = await uploadLogo(logoFile);
         updateData.logo_url = logoUrl;
       }
-
-      const { error } = await supabase
-        .from('cooperative_config')
-        .upsert(updateData, { onConflict: 'id' });
-
-      if (error) throw error;
+      if (config?.id) {
+        const { error } = await supabase
+          .from('cooperative_config')
+          .update(updateData)
+          .eq('id', config.id);
+        if (error) throw error;
+      } else {
+        const { data, error } = await supabase
+          .from('cooperative_config')
+          .insert([updateData])
+          .select()
+          .single();
+        if (error) throw error;
+        if (data) setConfig(data as any);
+      }
 
       toast({
         title: "Éxito",
