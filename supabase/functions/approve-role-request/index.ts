@@ -165,7 +165,7 @@ const handler = async (req: Request): Promise<Response> => {
       employee: 'Empleado',
       partner: 'Socio',
       driver: 'Conductor',
-      official: 'Dirigente',
+      official: 'Oficial',
       client: 'Cliente'
     };
 

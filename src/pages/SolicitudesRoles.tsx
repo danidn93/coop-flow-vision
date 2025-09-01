@@ -144,7 +144,7 @@ const SolicitudesRoles = () => {
       employee: 'Empleado',
       partner: 'Socio',
       driver: 'Conductor',
-      official: 'Dirigente',
+      official: 'Oficial',
       client: 'Cliente'
     };
     return roleNames[role as keyof typeof roleNames] || role;

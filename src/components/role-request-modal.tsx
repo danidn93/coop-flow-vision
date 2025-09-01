@@ -30,9 +30,9 @@ export function RoleRequestModal({ isOpen, onClose }: RoleRequestModalProps) {
 
   const availableRoles = [
     { value: 'driver', label: 'Conductor', description: 'Conducir vehículos de la cooperativa' },
+    { value: 'official', label: 'Oficial', description: 'Supervisar y controlar operaciones en los buses' },
     { value: 'partner', label: 'Socio', description: 'Participar como socio de la cooperativa' },
     { value: 'employee', label: 'Empleado', description: 'Trabajar como empleado' },
-    { value: 'official', label: 'Dirigente', description: 'Participar en la dirigencia' },
     { value: 'manager', label: 'Manager', description: 'Gestionar operaciones' },
     { value: 'administrator', label: 'Administrador', description: 'Acceso completo al sistema' }
   ];
