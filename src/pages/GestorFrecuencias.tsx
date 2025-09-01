@@ -20,6 +20,8 @@ interface RouteFrequency {
   is_last_turn: boolean;
   assigned_bus_id?: string;
   status: string;
+  passengers_count?: number;
+  revenue?: number;
   routes?: {
     name: string;
     origin: string;
@@ -39,14 +41,17 @@ const GestorFrecuencias = () => {
   const [routes, setRoutes] = useState<any[]>([]);
   const [buses, setBuses] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
-const [selectedRoute, setSelectedRoute] = useState<string>('');
-const [selectedDate, setSelectedDate] = useState<string>(new Date().toISOString().split('T')[0]);
-const [isAssignDialogOpen, setIsAssignDialogOpen] = useState(false);
-const [selectedFrequency, setSelectedFrequency] = useState<RouteFrequency | null>(null);
-const [selectedBus, setSelectedBus] = useState<string>('');
-const [startTime, setStartTime] = useState<string>('05:00');
-const [endTime, setEndTime] = useState<string>('22:00');
-const [frequencyMinutes, setFrequencyMinutes] = useState<number>(15);
+  const [selectedRoute, setSelectedRoute] = useState<string>('');
+  const [selectedDate, setSelectedDate] = useState<string>(new Date().toISOString().split('T')[0]);
+  const [isAssignDialogOpen, setIsAssignDialogOpen] = useState(false);
+  const [isCloseDialogOpen, setIsCloseDialogOpen] = useState(false);
+  const [selectedFrequency, setSelectedFrequency] = useState<RouteFrequency | null>(null);
+  const [selectedBus, setSelectedBus] = useState<string>('');
+  const [passengersCount, setPassengersCount] = useState<number>(0);
+  const [revenue, setRevenue] = useState<number>(0);
+  const [startTime, setStartTime] = useState<string>('05:00');
+  const [endTime, setEndTime] = useState<string>('22:00');
+  const [frequencyMinutes, setFrequencyMinutes] = useState<number>(15);
 
   const canManage = userRole && ['administrator', 'manager', 'employee'].includes(userRole.role);
 
@@ -135,6 +140,43 @@ const [frequencyMinutes, setFrequencyMinutes] = useState<number>(15);
       loadFrequencies(selectedRoute, selectedDate);
     } catch (error: any) {
       toast({ title: 'Error', description: 'No se pudieron generar las frecuencias', variant: 'destructive' });
+    }
+  };
+
+  const addFrequencyClosure = async () => {
+    if (!selectedFrequency) return;
+
+    try {
+      const { error } = await supabase
+        .from('route_frequencies')
+        .update({ 
+          passengers_count: passengersCount,
+          revenue: revenue,
+          status: 'completed'
+        })
+        .eq('id', selectedFrequency.id);
+
+      if (error) throw error;
+
+      toast({
+        title: "Éxito",
+        description: "Cierre de frecuencia registrado correctamente",
+      });
+
+      setIsCloseDialogOpen(false);
+      setSelectedFrequency(null);
+      setPassengersCount(0);
+      setRevenue(0);
+      
+      if (selectedRoute && selectedDate) {
+        loadFrequencies(selectedRoute, selectedDate);
+      }
+    } catch (error: any) {
+      toast({
+        title: "Error",
+        description: "No se pudo registrar el cierre",
+        variant: "destructive",
+      });
     }
   };
 
@@ -368,27 +410,28 @@ const [frequencyMinutes, setFrequencyMinutes] = useState<number>(15);
               Frecuencias de la Ruta
             </CardTitle>
           </CardHeader>
-<CardContent>
-  <div className="space-y-6">
-    <div className="grid gap-4 md:grid-cols-3">
-      <div>
-        <label className="block text-sm font-medium mb-2">Desde</label>
-        <Input type="time" value={startTime} onChange={(e) => setStartTime(e.target.value)} />
-      </div>
-      <div>
-        <label className="block text-sm font-medium mb-2">Hasta</label>
-        <Input type="time" value={endTime} onChange={(e) => setEndTime(e.target.value)} />
-      </div>
-      <div>
-        <label className="block text-sm font-medium mb-2">Cada (min)</label>
-        <Input type="number" min={1} value={frequencyMinutes} onChange={(e) => setFrequencyMinutes(parseInt(e.target.value) || 1)} />
-      </div>
-    </div>
-    {canManage && (
-      <div className="flex justify-end">
-        <Button onClick={generateFrequencies}>Generar frecuencias</Button>
-      </div>
-    )}
+          <CardContent>
+            <div className="space-y-6">
+              <div className="grid gap-4 md:grid-cols-3">
+                <div>
+                  <label className="block text-sm font-medium mb-2">Desde</label>
+                  <Input type="time" value={startTime} onChange={(e) => setStartTime(e.target.value)} />
+                </div>
+                <div>
+                  <label className="block text-sm font-medium mb-2">Hasta</label>
+                  <Input type="time" value={endTime} onChange={(e) => setEndTime(e.target.value)} />
+                </div>
+                <div>
+                  <label className="block text-sm font-medium mb-2">Cada (min)</label>
+                  <Input type="number" min={1} value={frequencyMinutes} onChange={(e) => setFrequencyMinutes(parseInt(e.target.value) || 1)} />
+                </div>
+              </div>
+              {canManage && (
+                <div className="flex justify-end">
+                  <Button onClick={generateFrequencies}>Generar frecuencias</Button>
+                </div>
+              )}
+              
               {frequencies.length === 0 ? (
                 <div className="text-center py-8 text-muted-foreground">
                   No hay frecuencias configuradas para esta ruta.
@@ -421,6 +464,18 @@ const [frequencyMinutes, setFrequencyMinutes] = useState<number>(15);
                             <span className="text-sm">
                               {frequency.buses.alias} ({frequency.buses.plate})
                             </span>
+                            {frequency.status === 'completed' && (
+                              <div className="flex items-center space-x-4 ml-4">
+                                <div className="flex items-center space-x-1">
+                                  <Users className="h-3 w-3" />
+                                  <span className="text-xs">{frequency.passengers_count} pax</span>
+                                </div>
+                                <div className="flex items-center space-x-1">
+                                  <span className="text-xs">$</span>
+                                  <span className="text-xs">{frequency.revenue}</span>
+                                </div>
+                              </div>
+                            )}
                           </div>
                         ) : (
                           <div className="flex items-center space-x-2 text-muted-foreground">
@@ -430,7 +485,7 @@ const [frequencyMinutes, setFrequencyMinutes] = useState<number>(15);
                         )}
                       </div>
 
-                       {canManage && (
+                      {canManage && (
                         <div className="flex gap-2">
                           <Button
                             size="sm"
@@ -440,13 +495,30 @@ const [frequencyMinutes, setFrequencyMinutes] = useState<number>(15);
                             Cancelar
                           </Button>
                           {frequency.buses ? (
-                            <Button
-                              size="sm"
-                              variant="outline"
-                              onClick={() => unassignBusFromFrequency(frequency.id)}
-                            >
-                              Desasignar
-                            </Button>
+                            frequency.status === 'completed' ? (
+                              <Badge variant="default">Completada</Badge>
+                            ) : (
+                              <>
+                                <Button
+                                  size="sm"
+                                  variant="outline"
+                                  onClick={() => unassignBusFromFrequency(frequency.id)}
+                                >
+                                  Desasignar
+                                </Button>
+                                <Button
+                                  size="sm"
+                                  onClick={() => {
+                                    setSelectedFrequency(frequency);
+                                    setPassengersCount(frequency.passengers_count || 0);
+                                    setRevenue(frequency.revenue || 0);
+                                    setIsCloseDialogOpen(true);
+                                  }}
+                                >
+                                  Agregar Cierre
+                                </Button>
+                              </>
+                            )
                           ) : (
                             <Button
                               size="sm"
@@ -516,6 +588,70 @@ const [frequencyMinutes, setFrequencyMinutes] = useState<number>(15);
                 disabled={!selectedBus}
               >
                 Asignar Bus
+              </Button>
+            </div>
+          </div>
+        </DialogContent>
+      </Dialog>
+
+      <Dialog open={isCloseDialogOpen} onOpenChange={setIsCloseDialogOpen}>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>Cerrar Frecuencia</DialogTitle>
+          </DialogHeader>
+          <div className="space-y-4">
+            {selectedFrequency && (
+              <div className="p-3 bg-muted rounded-lg">
+                <p className="font-medium">
+                  Frecuencia: {formatTime(selectedFrequency.departure_time)} - {formatTime(selectedFrequency.arrival_time)}
+                </p>
+                <p className="text-sm text-muted-foreground">
+                  {selectedFrequency.routes?.origin} - {selectedFrequency.routes?.destination}
+                </p>
+                {selectedFrequency.buses && (
+                  <p className="text-sm text-muted-foreground">
+                    Bus: {selectedFrequency.buses.alias} ({selectedFrequency.buses.plate})
+                  </p>
+                )}
+              </div>
+            )}
+            
+            <div className="grid gap-4 md:grid-cols-2">
+              <div>
+                <label className="block text-sm font-medium mb-2">Cantidad de Pasajeros</label>
+                <Input
+                  type="number"
+                  min="0"
+                  value={passengersCount}
+                  onChange={(e) => setPassengersCount(parseInt(e.target.value) || 0)}
+                  placeholder="0"
+                />
+              </div>
+              
+              <div>
+                <label className="block text-sm font-medium mb-2">Ingresos ($)</label>
+                <Input
+                  type="number"
+                  min="0"
+                  step="0.01"
+                  value={revenue}
+                  onChange={(e) => setRevenue(parseFloat(e.target.value) || 0)}
+                  placeholder="0.00"
+                />
+              </div>
+            </div>
+
+            <div className="flex justify-end gap-2">
+              <Button 
+                variant="outline" 
+                onClick={() => setIsCloseDialogOpen(false)}
+              >
+                Cancelar
+              </Button>
+              <Button 
+                onClick={addFrequencyClosure}
+              >
+                Guardar Cierre
               </Button>
             </div>
           </div>
