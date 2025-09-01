@@ -91,13 +91,26 @@ const handler = async (req: Request): Promise<Response> => {
     }
 
     // Check if id_number already exists
-    const { data: existingProfile } = await supabaseAdmin
+    console.log('Checking for existing profile with id_number:', signupData.id_number);
+    const { data: existingProfile, error: profileCheckError } = await supabaseAdmin
       .from('profiles')
       .select('id_number')
       .eq('id_number', signupData.id_number)
-      .single();
+      .maybeSingle();
+
+    if (profileCheckError) {
+      console.error('Profile check error:', profileCheckError);
+      return new Response(
+        JSON.stringify({ error: 'Error verificando cédula existente' }),
+        {
+          status: 500,
+          headers: { 'Content-Type': 'application/json', ...corsHeaders }
+        }
+      );
+    }
 
     if (existingProfile) {
+      console.log('Profile already exists with this id_number');
       return new Response(
         JSON.stringify({ 
           error: 'Ya existe un usuario con esta cédula' 
@@ -110,9 +123,22 @@ const handler = async (req: Request): Promise<Response> => {
     }
 
     // Check if email already exists
-    const { data: existingUser } = await supabaseAdmin.auth.admin.getUserByEmail(signupData.email);
+    console.log('Checking for existing user with email:', signupData.email);
+    const { data: existingUser, error: emailCheckError } = await supabaseAdmin.auth.admin.getUserByEmail(signupData.email);
+    
+    if (emailCheckError) {
+      console.error('Email check error:', emailCheckError);
+      return new Response(
+        JSON.stringify({ error: 'Error verificando email existente' }),
+        {
+          status: 500,
+          headers: { 'Content-Type': 'application/json', ...corsHeaders }
+        }
+      );
+    }
     
     if (existingUser.user) {
+      console.log('User already exists with this email');
       return new Response(
         JSON.stringify({ 
           error: 'Ya existe un usuario con este email' 
