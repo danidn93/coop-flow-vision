@@ -52,6 +52,9 @@ const GestorUsuarios = () => {
   });
   const [isLoadingUserData, setIsLoadingUserData] = useState(false);
   const [userDataLoaded, setUserDataLoaded] = useState(false);
+  const [isExistingUser, setIsExistingUser] = useState(false);
+  const [existingRoles, setExistingRoles] = useState<string[]>([]);
+  const [existingUserId, setExistingUserId] = useState<string | null>(null);
 
   useEffect(() => {
     loadUsers();
@@ -99,9 +102,23 @@ const GestorUsuarios = () => {
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    
     try {
-      // Create user with first role
+      if (isExistingUser) {
+        if (!existingUserId) throw new Error('No se pudo identificar al usuario existente');
+        // Add only additional roles
+        const additionalRoles = formData.roles.filter((r) => !existingRoles.includes(r));
+        for (const role of additionalRoles) {
+          const { error } = await supabase.from('user_roles').insert({ user_id: existingUserId, role: role as any });
+          if (error) throw error;
+        }
+        toast({ title: 'Éxito', description: additionalRoles.length ? 'Roles añadidos correctamente' : 'No hay roles nuevos para añadir' });
+        setIsDialogOpen(false);
+        resetForm();
+        loadUsers();
+        return;
+      }
+
+      // Create brand-new user
       const primaryRole = formData.roles[0] || 'client';
       const { data, error } = await supabase.functions.invoke('admin-signup', {
         body: {
@@ -114,8 +131,8 @@ const GestorUsuarios = () => {
           id_number: formData.id_number,
           phone: formData.phone,
           address: formData.address,
-          role: primaryRole
-        }
+          role: primaryRole,
+        },
       });
 
       if (error) {
@@ -127,34 +144,20 @@ const GestorUsuarios = () => {
         throw new Error((data as any).error);
       }
 
-      // If user has multiple roles, add the additional ones
+      // Add additional roles
       if (formData.roles.length > 1 && data?.user) {
         const additionalRoles = formData.roles.slice(1);
-        
         for (const role of additionalRoles) {
-          await supabase
-            .from('user_roles')
-            .insert({
-              user_id: data.user.id,
-              role: role as any
-            });
+          await supabase.from('user_roles').insert({ user_id: data.user.id, role: role as any });
         }
       }
-      
-      toast({
-        title: "Éxito",
-        description: data?.message || (userDataLoaded ? "Usuario actualizado correctamente" : "Usuario creado correctamente"),
-      });
-      
+
+      toast({ title: 'Éxito', description: data?.message || 'Usuario creado correctamente' });
       setIsDialogOpen(false);
       resetForm();
       loadUsers();
     } catch (error: any) {
-      toast({
-        title: "Error",
-        description: error.message || "No se pudo crear el usuario",
-        variant: "destructive",
-      });
+      toast({ title: 'Error', description: error.message || 'No se pudo procesar la solicitud', variant: 'destructive' });
     }
   };
 
@@ -199,51 +202,60 @@ const GestorUsuarios = () => {
   const checkUserByEmail = async (email: string) => {
     if (!email || email.length < 5 || !email.includes('@')) {
       setUserDataLoaded(false);
+      setIsExistingUser(false);
+      setExistingRoles([]);
+      setExistingUserId(null);
       return;
     }
 
     setIsLoadingUserData(true);
     try {
-      // Check if user exists and get their data
-      const { data, error } = await supabase.functions.invoke('admin-signup', {
-        body: {
-          email: email,
-          password: 'temp', // Temporary password, will be ignored if user exists
-          first_name: 'temp',
-          surname_1: 'temp',
-          id_number: 'temp',
-          phone: 'temp',
-          address: 'temp',
-          role: 'client'
-        }
-      });
+      const { data, error } = await supabase.functions.invoke('check-user', { body: { email } });
+      if (error) throw error;
 
-      if (data && data.user_data) {
-        // User exists, load their data
-        const userData = data.user_data;
+      if (data && (data as any).exists) {
+        const payload = data as any;
+        const profile = payload.profile || {};
+        const rolesArr: string[] = payload.roles || [];
         setFormData({
           ...formData,
-          email: email,
-          first_name: userData.first_name || '',
-          middle_name: userData.middle_name || '',
-          surname_1: userData.surname_1 || '',
-          surname_2: userData.surname_2 || '',
-          id_number: userData.id_number || '',
-          phone: userData.phone || '',
-          address: userData.address || '',
-          roles: userData.role ? [userData.role] : ['client']
+          email,
+          first_name: profile.first_name || '',
+          middle_name: profile.middle_name || '',
+          surname_1: profile.surname_1 || '',
+          surname_2: profile.surname_2 || '',
+          id_number: profile.id_number || '',
+          phone: profile.phone || '',
+          address: profile.address || '',
+          roles: rolesArr.length ? rolesArr : ['client'],
         });
+        setExistingRoles(rolesArr);
+        setExistingUserId(payload.user?.id || null);
+        setIsExistingUser(true);
         setUserDataLoaded(true);
-        
-        toast({
-          title: "Usuario encontrado",
-          description: "Se cargaron los datos del usuario existente",
-        });
       } else {
+        // Not found: clear fields (except email) and reset roles/password
+        setFormData({
+          email,
+          password: '',
+          first_name: '',
+          middle_name: '',
+          surname_1: '',
+          surname_2: '',
+          id_number: '',
+          phone: '',
+          address: '',
+          roles: ['client'],
+        });
+        setExistingRoles([]);
+        setExistingUserId(null);
+        setIsExistingUser(false);
         setUserDataLoaded(false);
       }
-    } catch (error: any) {
-      // If error is about user not existing, that's fine
+    } catch (err) {
+      setIsExistingUser(false);
+      setExistingRoles([]);
+      setExistingUserId(null);
       setUserDataLoaded(false);
     } finally {
       setIsLoadingUserData(false);
@@ -264,11 +276,13 @@ const GestorUsuarios = () => {
     if (formData.email && formData.email.length > 5 && formData.email.includes('@')) {
       const timeoutId = setTimeout(() => {
         checkUserByEmail(formData.email);
-      }, 1000);
-      
+      }, 600);
       return () => clearTimeout(timeoutId);
     } else {
       setUserDataLoaded(false);
+      setIsExistingUser(false);
+      setExistingRoles([]);
+      setExistingUserId(null);
     }
   }, [formData.email]);
 
@@ -283,9 +297,12 @@ const GestorUsuarios = () => {
       id_number: '',
       phone: '',
       address: '',
-      roles: ['client']
+      roles: ['client'],
     });
     setUserDataLoaded(false);
+    setIsExistingUser(false);
+    setExistingRoles([]);
+    setExistingUserId(null);
   };
 
   const openRoleDialog = (user: UserProfile) => {
@@ -306,16 +323,14 @@ const GestorUsuarios = () => {
   ];
 
   const handleRoleToggle = (roleValue: string, checked: boolean) => {
+    if (isExistingUser && existingRoles.includes(roleValue) && !checked) {
+      // Prevent removing existing roles here
+      return;
+    }
     if (checked) {
-      setFormData({
-        ...formData,
-        roles: [...formData.roles, roleValue]
-      });
+      setFormData({ ...formData, roles: [...new Set([...formData.roles, roleValue])] });
     } else {
-      setFormData({
-        ...formData,
-        roles: formData.roles.filter(r => r !== roleValue)
-      });
+      setFormData({ ...formData, roles: formData.roles.filter((r) => r !== roleValue) });
     }
   };
 
@@ -428,24 +443,24 @@ const GestorUsuarios = () => {
                         </div>
                       )}
                     </div>
-                    {userDataLoaded && (
-                      <p className="text-xs text-green-600">
-                        ✓ Datos del usuario existente cargados automáticamente
-                      </p>
+                    {isExistingUser && (
+                      <p className="text-xs text-green-600">✓ Datos del usuario existente cargados automáticamente</p>
                     )}
                   </div>
                   
-                  <div className="space-y-2">
-                    <Label htmlFor="password">Contraseña *</Label>
-                    <Input
-                      id="password"
-                      type="password"
-                      value={formData.password}
-                      onChange={(e) => setFormData({...formData, password: e.target.value})}
-                      required
-                      minLength={6}
-                    />
-                  </div>
+                  {!isExistingUser && (
+                    <div className="space-y-2">
+                      <Label htmlFor="password">Contraseña *</Label>
+                      <Input
+                        id="password"
+                        type="password"
+                        value={formData.password}
+                        onChange={(e) => setFormData({ ...formData, password: e.target.value })}
+                        required={!isExistingUser}
+                        minLength={6}
+                      />
+                    </div>
+                  )}
                 </div>
                 
                 <div className="grid grid-cols-2 gap-4">
@@ -456,6 +471,7 @@ const GestorUsuarios = () => {
                       value={formData.first_name}
                       onChange={(e) => setFormData({...formData, first_name: e.target.value})}
                       required
+                      disabled={isExistingUser}
                     />
                   </div>
                   
@@ -465,6 +481,7 @@ const GestorUsuarios = () => {
                       id="middle_name"
                       value={formData.middle_name}
                       onChange={(e) => setFormData({...formData, middle_name: e.target.value})}
+                      disabled={isExistingUser}
                     />
                   </div>
                 </div>
@@ -477,6 +494,7 @@ const GestorUsuarios = () => {
                       value={formData.surname_1}
                       onChange={(e) => setFormData({...formData, surname_1: e.target.value})}
                       required
+                      disabled={isExistingUser}
                     />
                   </div>
                   
@@ -486,6 +504,7 @@ const GestorUsuarios = () => {
                       id="surname_2"
                       value={formData.surname_2}
                       onChange={(e) => setFormData({...formData, surname_2: e.target.value})}
+                      disabled={isExistingUser}
                     />
                   </div>
                 </div>
@@ -500,6 +519,7 @@ const GestorUsuarios = () => {
                       required
                       minLength={10}
                       maxLength={13}
+                      disabled={isExistingUser}
                     />
                   </div>
                   
@@ -510,6 +530,7 @@ const GestorUsuarios = () => {
                       value={formData.phone}
                       onChange={(e) => setFormData({...formData, phone: e.target.value})}
                       required
+                      disabled={isExistingUser}
                     />
                   </div>
                 </div>
@@ -521,6 +542,7 @@ const GestorUsuarios = () => {
                     value={formData.address}
                     onChange={(e) => setFormData({...formData, address: e.target.value})}
                     required
+                    disabled={isExistingUser}
                   />
                 </div>
                 
@@ -533,6 +555,7 @@ const GestorUsuarios = () => {
                           id={role.value}
                           checked={formData.roles.includes(role.value)}
                           onCheckedChange={(checked) => handleRoleToggle(role.value, !!checked)}
+                          disabled={isExistingUser && existingRoles.includes(role.value)}
                         />
                         <Label 
                           htmlFor={role.value} 
@@ -543,9 +566,11 @@ const GestorUsuarios = () => {
                       </div>
                     ))}
                   </div>
-                  <p className="text-xs text-muted-foreground">
-                    Selecciona uno o más roles para este usuario
-                  </p>
+                    {isExistingUser ? (
+                      <p className="text-xs text-muted-foreground">Los roles ya asignados no se pueden quitar aquí; selecciona roles adicionales.</p>
+                    ) : (
+                      <p className="text-xs text-muted-foreground">Selecciona uno o más roles para este usuario</p>
+                    )}
                 </div>
                 
                 <div className="flex justify-end gap-2">
@@ -553,7 +578,7 @@ const GestorUsuarios = () => {
                     Cancelar
                   </Button>
                   <Button type="submit">
-                    {userDataLoaded ? 'Actualizar Usuario' : 'Crear Usuario'}
+                    {isExistingUser ? 'Añadir Roles' : 'Crear Usuario'}
                   </Button>
                 </div>
               </form>
