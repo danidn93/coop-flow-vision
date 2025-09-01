@@ -122,12 +122,22 @@ const handler = async (req: Request): Promise<Response> => {
       );
     }
 
-    // Check if email already exists
+    // Check if email already exists using REST API
     console.log('Checking for existing user with email:', signupData.email);
-    const { data: existingUser, error: emailCheckError } = await supabaseAdmin.auth.admin.getUserByEmail(signupData.email);
-    
-    if (emailCheckError) {
-      console.error('Email check error:', emailCheckError);
+    const emailCheckResponse = await fetch(
+      `${Deno.env.get('SUPABASE_URL')}/auth/v1/admin/users?email=${encodeURIComponent(signupData.email)}`,
+      {
+        method: 'GET',
+        headers: {
+          'Authorization': `Bearer ${Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')}`,
+          'Content-Type': 'application/json',
+          'apikey': Deno.env.get('SUPABASE_SERVICE_ROLE_KEY') ?? ''
+        }
+      }
+    );
+
+    if (!emailCheckResponse.ok) {
+      console.error('Email check failed:', await emailCheckResponse.text());
       return new Response(
         JSON.stringify({ error: 'Error verificando email existente' }),
         {
@@ -136,8 +146,9 @@ const handler = async (req: Request): Promise<Response> => {
         }
       );
     }
-    
-    if (existingUser.user) {
+
+    const existingUsers = await emailCheckResponse.json();
+    if (existingUsers.users && existingUsers.users.length > 0) {
       console.log('User already exists with this email');
       return new Response(
         JSON.stringify({ 
@@ -150,32 +161,47 @@ const handler = async (req: Request): Promise<Response> => {
       );
     }
 
-    // Create user with admin privileges (no email confirmation required)
-    const { data: authData, error: authError } = await supabaseAdmin.auth.admin.createUser({
-      email: signupData.email,
-      password: signupData.password,
-      email_confirm: true, // Skip email confirmation
-      user_metadata: {
-        first_name: signupData.first_name,
-        middle_name: signupData.middle_name,
-        surname_1: signupData.surname_1,
-        surname_2: signupData.surname_2,
-        id_number: signupData.id_number,
-        phone: signupData.phone,
-        address: signupData.address
+    // Create user using REST API
+    console.log('Creating user with admin API');
+    const createUserResponse = await fetch(
+      `${Deno.env.get('SUPABASE_URL')}/auth/v1/admin/users`,
+      {
+        method: 'POST',
+        headers: {
+          'Authorization': `Bearer ${Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')}`,
+          'Content-Type': 'application/json',
+          'apikey': Deno.env.get('SUPABASE_SERVICE_ROLE_KEY') ?? ''
+        },
+        body: JSON.stringify({
+          email: signupData.email,
+          password: signupData.password,
+          email_confirm: true,
+          user_metadata: {
+            first_name: signupData.first_name,
+            middle_name: signupData.middle_name,
+            surname_1: signupData.surname_1,
+            surname_2: signupData.surname_2,
+            id_number: signupData.id_number,
+            phone: signupData.phone,
+            address: signupData.address
+          }
+        })
       }
-    });
+    );
 
-    if (authError) {
-      console.error('Auth error:', authError);
+    if (!createUserResponse.ok) {
+      const errorText = await createUserResponse.text();
+      console.error('User creation failed:', errorText);
       return new Response(
-        JSON.stringify({ error: authError.message }),
+        JSON.stringify({ error: 'Error creando el usuario' }),
         {
           status: 400,
           headers: { 'Content-Type': 'application/json', ...corsHeaders }
         }
       );
     }
+
+    const authData = await createUserResponse.json();
 
     if (authData.user) {
       // Create profile manually since the trigger won't work with admin.createUser
@@ -194,8 +220,17 @@ const handler = async (req: Request): Promise<Response> => {
 
       if (profileError) {
         console.error('Profile error:', profileError);
-        // Delete the user if profile creation fails
-        await supabaseAdmin.auth.admin.deleteUser(authData.user.id);
+        // Delete the user if profile creation fails using REST API
+        await fetch(
+          `${Deno.env.get('SUPABASE_URL')}/auth/v1/admin/users/${authData.user.id}`,
+          {
+            method: 'DELETE',
+            headers: {
+              'Authorization': `Bearer ${Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')}`,
+              'apikey': Deno.env.get('SUPABASE_SERVICE_ROLE_KEY') ?? ''
+            }
+          }
+        );
         return new Response(
           JSON.stringify({ error: 'Error creando el perfil del usuario' }),
           {
