@@ -57,21 +57,21 @@ const App = () => (
               </ProtectedRoute>
             } />
             <Route path="/usuarios" element={
-              <ProtectedRoute>
+              <ProtectedRoute allowedRoles={['administrator', 'manager']}>
                 <DashboardLayout>
                   <GestorUsuarios />
                 </DashboardLayout>
               </ProtectedRoute>
             } />
             <Route path="/buses" element={
-              <ProtectedRoute>
+              <ProtectedRoute allowedRoles={['administrator', 'manager', 'partner']}>
                 <DashboardLayout>
                   <GestorBuses />
                 </DashboardLayout>
               </ProtectedRoute>
             } />
             <Route path="/rutas" element={
-              <ProtectedRoute>
+              <ProtectedRoute allowedRoles={['administrator', 'manager', 'partner']}>
                 <DashboardLayout>
                   <GestorRutas />
                 </DashboardLayout>
@@ -85,7 +85,7 @@ const App = () => (
               </ProtectedRoute>
             } />
             <Route path="/chat-buses" element={
-              <ProtectedRoute>
+              <ProtectedRoute allowedRoles={['partner', 'driver', 'administrator', 'manager']}>
                 <DashboardLayout>
                   <ChatBuses />
                 </DashboardLayout>
@@ -99,14 +99,14 @@ const App = () => (
               </ProtectedRoute>
             } />
             <Route path="/reportes" element={
-              <ProtectedRoute>
+              <ProtectedRoute allowedRoles={['administrator', 'manager', 'president']}>
                 <DashboardLayout>
                   <Reportes />
                 </DashboardLayout>
               </ProtectedRoute>
             } />
             <Route path="/gestor-frecuencias" element={
-              <ProtectedRoute>
+              <ProtectedRoute allowedRoles={['administrator', 'manager']}>
                 <DashboardLayout>
                   <GestorFrecuencias />
                 </DashboardLayout>
@@ -120,7 +120,7 @@ const App = () => (
               </ProtectedRoute>
             } />
             <Route path="/configuracion-cooperativa" element={
-              <ProtectedRoute>
+              <ProtectedRoute allowedRoles={['administrator', 'president']}>
                 <DashboardLayout>
                   <ConfiguracionCooperativa />
                 </DashboardLayout>
@@ -134,7 +134,7 @@ const App = () => (
               </ProtectedRoute>
             } />
             <Route path="/configuracion-tema" element={
-              <ProtectedRoute>
+              <ProtectedRoute allowedRoles={['administrator']}>
                 <DashboardLayout>
                   <ConfiguracionTema />
                 </DashboardLayout>

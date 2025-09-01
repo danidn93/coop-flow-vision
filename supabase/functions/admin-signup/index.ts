@@ -206,37 +206,29 @@ const handler = async (req: Request): Promise<Response> => {
         }
       }
 
-      // Get existing role
-      const { data: existingRole, error: roleFetchError } = await supabaseAdmin
+      // Get existing roles for this user
+      const { data: existingRoles, error: roleFetchError } = await supabaseAdmin
         .from('user_roles')
         .select('id, role')
-        .eq('user_id', existingUser.id)
-        .maybeSingle();
+        .eq('user_id', existingUser.id);
 
       if (roleFetchError) {
-        console.error('Error checking existing role:', roleFetchError);
+        console.error('Error checking existing roles:', roleFetchError);
       }
 
-      // Update or insert role
-      if (existingRole) {
-        if (existingRole.role !== signupData.role) {
-          console.log('Updating role for existing user');
-          const { error: roleUpdateError } = await supabaseAdmin
-            .from('user_roles')
-            .update({ role: signupData.role })
-            .eq('id', existingRole.id);
-          if (roleUpdateError) {
-            console.error('Role update error:', roleUpdateError);
-          }
-        }
-      } else {
-        console.log('Inserting role for existing user');
+      // Check if user already has this role
+      const hasRole = existingRoles?.some(r => r.role === signupData.role);
+      
+      if (!hasRole) {
+        console.log('Adding new role for existing user:', signupData.role);
         const { error: roleInsertError } = await supabaseAdmin
           .from('user_roles')
           .insert({ user_id: existingUser.id, role: signupData.role });
         if (roleInsertError) {
           console.error('Role insert error:', roleInsertError);
         }
+      } else {
+        console.log('User already has role:', signupData.role);
       }
 
       // Return existing user data
