@@ -61,8 +61,11 @@ export function AppSidebar() {
   };
 
   const allowedClient = new Set<string>(["/recompensas", "/chat-soporte", "/incidentes"]);
+  const allowedDriverOfficial = new Set<string>(["/", "/chat-soporte", "/incidentes"]);
+  
   const menuItems = rawMenuItems.filter((item) => {
     if (userRole?.role === 'client') return allowedClient.has(item.url);
+    if (userRole?.role === 'driver' || userRole?.role === 'official') return allowedDriverOfficial.has(item.url);
     if (item.url === '/solicitudes-roles') return userRole?.role === 'administrator';
     return true;
   });
