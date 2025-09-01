@@ -194,10 +194,12 @@ const GestorFrecuencias = () => {
 
       toast({
         title: "Éxito",
-        description: "Bus asignado a la frecuencia correctamente",
+        description: "Bus asignado. Ahora puede agregar datos de pasajeros por terminal.",
       });
 
       setIsAssignDialogOpen(false);
+      // Auto-expand the frequency to show terminal operations
+      setExpandedFrequency(selectedFrequency.id);
       setSelectedFrequency(null);
       setSelectedBus('');
       
@@ -518,14 +520,17 @@ const GestorFrecuencias = () => {
                                   </Button>
                                   <Button
                                     size="sm"
-                                    variant="outline"
+                                    variant={!frequency.terminal_operations || frequency.terminal_operations.length === 0 ? 'default' : 'outline'}
                                     onClick={() => {
                                       setExpandedFrequency(
                                         expandedFrequency === frequency.id ? null : frequency.id
                                       );
                                     }}
+                                    className={!frequency.terminal_operations || frequency.terminal_operations.length === 0 ? 'bg-yellow-500 hover:bg-yellow-600' : ''}
                                   >
-                                    {expandedFrequency === frequency.id ? 'Ocultar' : 'Ver'} Terminales
+                                    {expandedFrequency === frequency.id ? 'Ocultar' : 
+                                     (!frequency.terminal_operations || frequency.terminal_operations.length === 0) ? 
+                                     'Agregar Pasajeros' : 'Ver'} Terminales
                                   </Button>
                                   <Button
                                     size="sm"
