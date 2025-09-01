@@ -115,12 +115,14 @@ const GestorUsuarios = () => {
       });
 
       if (error) {
-        throw new Error(error.message || 'Error al crear el usuario');
+        const ctx: any = (error as any).context;
+        const serverMsg = typeof ctx === 'string' ? ctx : ctx?.error || ctx?.message;
+        throw new Error(serverMsg || error.message || 'Error al crear el usuario');
       }
 
-      // Check if the response contains an error from the function
-      if (data?.error) {
-        throw new Error(data.error);
+      // For seguridad: si la función responde 200 pero con payload de error
+      if (data && (data as any).error) {
+        throw new Error((data as any).error);
       }
       
       toast({
