@@ -63,14 +63,22 @@ const handler = async (req: Request): Promise<Response> => {
       );
     }
 
-    // Check if user is administrator
-    const { data: userRoles, error: rolesError } = await supabase
+    // Create an authenticated client for RLS-aware queries (using end-user JWT)
+    const supabaseAuthed = createClient(
+      Deno.env.get('SUPABASE_URL') ?? '',
+      Deno.env.get('SUPABASE_ANON_KEY') ?? '',
+      { global: { headers: { Authorization: authHeader } } }
+    );
+
+    // Check if user is administrator (RLS-aware)
+    const { data: userRoles, error: rolesError } = await supabaseAuthed
       .from('user_roles')
       .select('role')
       .eq('user_id', user.id)
       .eq('role', 'administrator');
 
     if (rolesError || !userRoles || userRoles.length === 0) {
+      console.warn('approve-role-request: user lacks admin role or roles fetch failed', { rolesError, userId: user.id });
       return new Response(
         JSON.stringify({ error: 'No tienes permisos para realizar esta acción' }),
         {
@@ -80,12 +88,7 @@ const handler = async (req: Request): Promise<Response> => {
       );
     }
 
-    // Create an authenticated client for RLS-aware queries
-    const supabaseAuthed = createClient(
-      Deno.env.get('SUPABASE_URL') ?? '',
-      Deno.env.get('SUPABASE_ANON_KEY') ?? '',
-      { global: { headers: { Authorization: authHeader } } }
-    );
+    // supabaseAuthed already created above
 
     // Parse request body
     const requestData: ApprovalData = await req.json();
