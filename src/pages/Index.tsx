@@ -4,6 +4,7 @@ import { CreateTestUsersButton } from '@/components/create-test-users-button';
 import { ClientDashboard } from '@/components/client-dashboard';
 import { DriverDashboard } from '@/components/driver-dashboard';
 import { OfficialDashboard } from '@/components/official-dashboard';
+import { PartnerDashboard } from '@/components/partner-dashboard';
 import { useAuth } from '@/hooks/useAuth';
 
 const Index = () => {
@@ -12,6 +13,7 @@ const Index = () => {
   const isClient = userRole?.role === 'client';
   const isDriver = userRole?.role === 'driver';
   const isOfficial = userRole?.role === 'official';
+  const isPartner = userRole?.role === 'partner';
 
   // Client dashboard
   if (isClient) {
@@ -45,6 +47,18 @@ const Index = () => {
           <h2 className="text-3xl font-bold tracking-tight">Dashboard del Oficial</h2>
         </div>
         <OfficialDashboard />
+      </>
+    );
+  }
+
+  // Partner dashboard
+  if (isPartner) {
+    return (
+      <>
+        <div className="flex items-center justify-between space-y-2">
+          <h2 className="text-3xl font-bold tracking-tight">Dashboard del Socio</h2>
+        </div>
+        <PartnerDashboard />
       </>
     );
   }

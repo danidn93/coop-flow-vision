@@ -652,6 +652,45 @@ export type Database = {
         }
         Relationships: []
       }
+      terminal_operations: {
+        Row: {
+          created_at: string
+          id: string
+          passengers_count: number
+          recorded_at: string
+          recorded_by: string
+          revenue: number
+          route_frequency_id: string
+          terminal_name: string
+          terminal_order: number
+          updated_at: string
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          passengers_count?: number
+          recorded_at?: string
+          recorded_by: string
+          revenue?: number
+          route_frequency_id: string
+          terminal_name: string
+          terminal_order?: number
+          updated_at?: string
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          passengers_count?: number
+          recorded_at?: string
+          recorded_by?: string
+          revenue?: number
+          route_frequency_id?: string
+          terminal_name?: string
+          terminal_order?: number
+          updated_at?: string
+        }
+        Relationships: []
+      }
       user_points: {
         Row: {
           created_at: string
