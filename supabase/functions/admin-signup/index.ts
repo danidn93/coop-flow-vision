@@ -122,12 +122,12 @@ const handler = async (req: Request): Promise<Response> => {
       );
     }
 
-    // Check if email already exists using REST API
-    console.log('Checking for existing user with email:', signupData.email);
+    // Use REST API to check if user exists with EXACT email match
+    console.log('Making request to admin users API...');
     const emailCheckResponse = await fetch(
-      `${Deno.env.get('SUPABASE_URL')}/auth/v1/admin/users?email=${encodeURIComponent(signupData.email)}`,
+      `${Deno.env.get('SUPABASE_URL')}/auth/v1/admin/users`,
       {
-        method: 'GET',
+        method: 'GET', 
         headers: {
           'Authorization': `Bearer ${Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')}`,
           'Content-Type': 'application/json',
@@ -137,7 +137,7 @@ const handler = async (req: Request): Promise<Response> => {
     );
 
     if (!emailCheckResponse.ok) {
-      console.error('Email check failed:', await emailCheckResponse.text());
+      console.error('Email check API failed:', await emailCheckResponse.text());
       return new Response(
         JSON.stringify({ error: 'Error verificando email existente' }),
         {
@@ -147,9 +147,18 @@ const handler = async (req: Request): Promise<Response> => {
       );
     }
 
-    const existingUsers = await emailCheckResponse.json();
-    if (existingUsers.users && existingUsers.users.length > 0) {
-      const existingUser = existingUsers.users[0];
+    const allUsers = await emailCheckResponse.json();
+    console.log('API response users count:', allUsers.users?.length || 0);
+
+    // Find user with EXACT email match (case insensitive)
+    const existingUser = allUsers.users?.find((u: any) => 
+      u.email && u.email.toLowerCase() === signupData.email.toLowerCase()
+    );
+
+    console.log('Exact email search for:', signupData.email);
+    console.log('Found matching user:', existingUser ? existingUser.id : 'none');
+
+    if (existingUser) {
       console.log('Email exists. Ensuring profile and role for user:', existingUser.id);
 
       // Ensure profile exists for this auth user
