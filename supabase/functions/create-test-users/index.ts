@@ -120,70 +120,105 @@ serve(async (req) => {
     
     for (const userData of testUsers) {
       try {
-        // Check if user already exists
-        const { data: existingUser } = await supabaseAdmin.auth.admin.getUserByEmail(userData.email);
+        console.log(`Processing user: ${userData.email}`);
         
-        if (existingUser.user) {
-          const user = existingUser.user;
-
-          // Ensure credentials and metadata are up to date
-          await supabaseAdmin.auth.admin.updateUserById(user.id, {
-            password: userData.password,
-            email_confirm: true,
-            user_metadata: {
-              first_name: userData.first_name,
-              middle_name: userData.middle_name,
-              surname_1: userData.surname_1,
-              surname_2: userData.surname_2,
-              id_number: userData.id_number,
-              phone: userData.phone,
-              address: userData.address
+        // Check if user already exists using REST API
+        const emailCheckResponse = await fetch(
+          `${Deno.env.get('SUPABASE_URL')}/auth/v1/admin/users?email=${encodeURIComponent(userData.email)}`,
+          {
+            method: 'GET',
+            headers: {
+              'Authorization': `Bearer ${Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')}`,
+              'Content-Type': 'application/json',
+              'apikey': Deno.env.get('SUPABASE_SERVICE_ROLE_KEY') ?? ''
             }
-          });
+          }
+        );
 
-// Ensure profile exists and is up to date
-const { data: existingProf } = await supabaseAdmin
-  .from('profiles')
-  .select('user_id')
-  .eq('user_id', user.id)
-  .maybeSingle();
+        let existingUser = null;
+        if (emailCheckResponse.ok) {
+          const existingUsers = await emailCheckResponse.json();
+          if (existingUsers.users && existingUsers.users.length > 0) {
+            existingUser = existingUsers.users[0];
+          }
+        }
+        
+        if (existingUser) {
+          console.log(`User exists: ${existingUser.id}, updating...`);
+          
+          // Update existing user using REST API
+          const updateResponse = await fetch(
+            `${Deno.env.get('SUPABASE_URL')}/auth/v1/admin/users/${existingUser.id}`,
+            {
+              method: 'PUT',
+              headers: {
+                'Authorization': `Bearer ${Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')}`,
+                'Content-Type': 'application/json',
+                'apikey': Deno.env.get('SUPABASE_SERVICE_ROLE_KEY') ?? ''
+              },
+              body: JSON.stringify({
+                password: userData.password,
+                email_confirm: true,
+                user_metadata: {
+                  first_name: userData.first_name,
+                  middle_name: userData.middle_name,
+                  surname_1: userData.surname_1,
+                  surname_2: userData.surname_2,
+                  id_number: userData.id_number,
+                  phone: userData.phone,
+                  address: userData.address
+                }
+              })
+            }
+          );
 
-if (existingProf) {
-  await supabaseAdmin
-    .from('profiles')
-    .update({
-      first_name: userData.first_name,
-      middle_name: userData.middle_name,
-      surname_1: userData.surname_1,
-      surname_2: userData.surname_2,
-      id_number: userData.id_number,
-      phone: userData.phone,
-      address: userData.address
-    })
-    .eq('user_id', user.id);
-} else {
-  await supabaseAdmin
-    .from('profiles')
-    .insert({
-      user_id: user.id,
-      first_name: userData.first_name,
-      middle_name: userData.middle_name,
-      surname_1: userData.surname_1,
-      surname_2: userData.surname_2,
-      id_number: userData.id_number,
-      phone: userData.phone,
-      address: userData.address
-    });
-}
+          if (!updateResponse.ok) {
+            console.error(`Error updating user ${userData.email}:`, await updateResponse.text());
+          }
 
-// Set single role deterministically
-await supabaseAdmin.from('user_roles').delete().eq('user_id', user.id);
-await supabaseAdmin.from('user_roles').insert({ user_id: user.id, role: userData.role });
+          // Ensure profile exists and is up to date
+          const { data: existingProf } = await supabaseAdmin
+            .from('profiles')
+            .select('user_id')
+            .eq('user_id', existingUser.id)
+            .maybeSingle();
+
+          if (existingProf) {
+            await supabaseAdmin
+              .from('profiles')
+              .update({
+                first_name: userData.first_name,
+                middle_name: userData.middle_name,
+                surname_1: userData.surname_1,
+                surname_2: userData.surname_2,
+                id_number: userData.id_number,
+                phone: userData.phone,
+                address: userData.address
+              })
+              .eq('user_id', existingUser.id);
+          } else {
+            await supabaseAdmin
+              .from('profiles')
+              .insert({
+                user_id: existingUser.id,
+                first_name: userData.first_name,
+                middle_name: userData.middle_name,
+                surname_1: userData.surname_1,
+                surname_2: userData.surname_2,
+                id_number: userData.id_number,
+                phone: userData.phone,
+                address: userData.address
+              });
+          }
+
+          // Set single role deterministically
+          await supabaseAdmin.from('user_roles').delete().eq('user_id', existingUser.id);
+          await supabaseAdmin.from('user_roles').insert({ user_id: existingUser.id, role: userData.role });
 
           results.push({
             email: userData.email,
             status: 'updated',
-            message: 'Usuario existente actualizado',
+            message: 'Usuario existente actualizado correctamente',
             credentials: {
               email: userData.email,
               password: userData.password,
@@ -193,36 +228,53 @@ await supabaseAdmin.from('user_roles').insert({ user_id: user.id, role: userData
           continue;
         }
 
-        // Create auth user
-        const { data: authUser, error: authError } = await supabaseAdmin.auth.admin.createUser({
-          email: userData.email,
-          password: userData.password,
-          email_confirm: true,
-          user_metadata: {
-            first_name: userData.first_name,
-            middle_name: userData.middle_name,
-            surname_1: userData.surname_1,
-            surname_2: userData.surname_2,
-            id_number: userData.id_number,
-            phone: userData.phone,
-            address: userData.address
+        console.log(`Creating new user: ${userData.email}`);
+        
+        // Create new user using REST API
+        const createUserResponse = await fetch(
+          `${Deno.env.get('SUPABASE_URL')}/auth/v1/admin/users`,
+          {
+            method: 'POST',
+            headers: {
+              'Authorization': `Bearer ${Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')}`,
+              'Content-Type': 'application/json',
+              'apikey': Deno.env.get('SUPABASE_SERVICE_ROLE_KEY') ?? ''
+            },
+            body: JSON.stringify({
+              email: userData.email,
+              password: userData.password,
+              email_confirm: true,
+              user_metadata: {
+                first_name: userData.first_name,
+                middle_name: userData.middle_name,
+                surname_1: userData.surname_1,
+                surname_2: userData.surname_2,
+                id_number: userData.id_number,
+                phone: userData.phone,
+                address: userData.address
+              }
+            })
           }
-        });
+        );
 
-        if (authError) {
+        if (!createUserResponse.ok) {
+          const errorText = await createUserResponse.text();
+          console.error(`Error creating user ${userData.email}:`, errorText);
           results.push({
             email: userData.email,
             status: 'error',
-            message: authError.message
+            message: `Error creando usuario: ${errorText}`
           });
           continue;
         }
 
-        if (!authUser.user) {
+        const authData = await createUserResponse.json();
+
+        if (!authData.user) {
           results.push({
             email: userData.email,
             status: 'error',
-            message: 'No se pudo crear el usuario'
+            message: 'No se pudo crear el usuario - respuesta vacía'
           });
           continue;
         }
@@ -231,7 +283,7 @@ await supabaseAdmin.from('user_roles').insert({ user_id: user.id, role: userData
         const { error: profileError } = await supabaseAdmin
           .from('profiles')
           .insert({
-            user_id: authUser.user.id,
+            user_id: authData.user.id,
             first_name: userData.first_name,
             middle_name: userData.middle_name,
             surname_1: userData.surname_1,
@@ -242,10 +294,22 @@ await supabaseAdmin.from('user_roles').insert({ user_id: user.id, role: userData
           });
 
         if (profileError) {
+          console.error(`Profile error for ${userData.email}:`, profileError);
+          // Delete the user if profile creation fails
+          await fetch(
+            `${Deno.env.get('SUPABASE_URL')}/auth/v1/admin/users/${authData.user.id}`,
+            {
+              method: 'DELETE',
+              headers: {
+                'Authorization': `Bearer ${Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')}`,
+                'apikey': Deno.env.get('SUPABASE_SERVICE_ROLE_KEY') ?? ''
+              }
+            }
+          );
           results.push({
             email: userData.email,
             status: 'error',
-            message: `Error en perfil: ${profileError.message}`
+            message: `Error creando perfil: ${profileError.message}`
           });
           continue;
         }
@@ -254,15 +318,16 @@ await supabaseAdmin.from('user_roles').insert({ user_id: user.id, role: userData
         const { error: roleError } = await supabaseAdmin
           .from('user_roles')
           .insert({
-            user_id: authUser.user.id,
+            user_id: authData.user.id,
             role: userData.role
           });
 
         if (roleError) {
+          console.error(`Role error for ${userData.email}:`, roleError);
           results.push({
             email: userData.email,
             status: 'error',
-            message: `Error en rol: ${roleError.message}`
+            message: `Error asignando rol: ${roleError.message}`
           });
           continue;
         }
@@ -279,10 +344,11 @@ await supabaseAdmin.from('user_roles').insert({ user_id: user.id, role: userData
         });
 
       } catch (error) {
+        console.error(`Error processing ${userData.email}:`, error);
         results.push({
           email: userData.email,
           status: 'error',
-          message: error.message
+          message: error.message || 'Error desconocido'
         });
       }
     }
@@ -291,12 +357,12 @@ await supabaseAdmin.from('user_roles').insert({ user_id: user.id, role: userData
       JSON.stringify({ 
         success: true, 
         results,
-        summary: {
-          total: testUsers.length,
-          created: results.filter(r => r.status === 'success').length,
-          errors: results.filter(r => r.status === 'error').length,
-          existing: results.filter(r => r.status === 'already_exists').length
-        }
+          summary: {
+            total: testUsers.length,
+            created: results.filter(r => r.status === 'success').length,
+            updated: results.filter(r => r.status === 'updated').length,
+            errors: results.filter(r => r.status === 'error').length
+          }
       }),
       {
         headers: { ...corsHeaders, 'Content-Type': 'application/json' },
