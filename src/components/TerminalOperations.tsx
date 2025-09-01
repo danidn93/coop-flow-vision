@@ -125,18 +125,32 @@ const TerminalOperations: React.FC<TerminalOperationsProps> = ({ frequency, onUp
     if (!user) return;
     
     try {
+      // Get terminals assigned to this user that are also part of this route
       const { data, error } = await supabase
         .from('terminal_assignments')
         .select(`
           terminal_id,
-          terminals(*)
+          terminals!inner(*)
         `)
         .eq('employee_id', user.id)
         .eq('is_active', true);
 
       if (error) throw error;
+
+      // Filter terminals that are part of this route
+      const { data: routeTerminals, error: routeError } = await supabase
+        .from('route_terminals')
+        .select('terminal_id')
+        .eq('route_id', frequency.route_id);
+
+      if (routeError) throw routeError;
+
+      const routeTerminalIds = new Set(routeTerminals?.map(rt => rt.terminal_id) || []);
+      const assignedTerminals = data
+        ?.map(assignment => assignment.terminals)
+        .filter(terminal => terminal && routeTerminalIds.has(terminal.id))
+        .filter(Boolean) || [];
       
-      const assignedTerminals = data?.map(assignment => assignment.terminals).filter(Boolean) || [];
       setUserAssignedTerminals(assignedTerminals);
     } catch (error: any) {
       console.error('Error loading user assigned terminals:', error);

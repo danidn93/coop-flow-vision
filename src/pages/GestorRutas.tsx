@@ -26,6 +26,14 @@ interface RouteData {
   created_at: string;
 }
 
+interface Terminal {
+  id: string;
+  name: string;
+  location: string;
+  terminal_type: string;
+  is_active: boolean;
+}
+
 interface RouteFrequency {
   id: string;
   route_id: string;
@@ -44,6 +52,8 @@ const GestorRutas = () => {
   const [routes, setRoutes] = useState<RouteData[]>([]);
   const [frequencies, setFrequencies] = useState<RouteFrequency[]>([]);
   const [buses, setBuses] = useState<any[]>([]);
+  const [terminals, setTerminals] = useState<Terminal[]>([]);
+  const [selectedTerminals, setSelectedTerminals] = useState<string[]>([]);
   const [loading, setLoading] = useState(true);
   const [isDialogOpen, setIsDialogOpen] = useState(false);
   const [isFrequencyDialogOpen, setIsFrequencyDialogOpen] = useState(false);
@@ -64,6 +74,7 @@ const GestorRutas = () => {
   useEffect(() => {
     loadRoutes();
     loadBuses();
+    loadTerminals();
   }, []);
 
   const canManageRoutes = userRole && ['administrator', 'manager', 'employee', 'partner'].includes(userRole.role);
@@ -99,6 +110,21 @@ const GestorRutas = () => {
       setBuses(data || []);
     } catch (error: any) {
       console.error('Error loading buses:', error);
+    }
+  };
+
+  const loadTerminals = async () => {
+    try {
+      const { data, error } = await supabase
+        .from('terminals')
+        .select('*')
+        .eq('is_active', true)
+        .order('name');
+
+      if (error) throw error;
+      setTerminals(data || []);
+    } catch (error: any) {
+      console.error('Error loading terminals:', error);
     }
   };
 
@@ -184,6 +210,9 @@ const GestorRutas = () => {
           .eq('id', editingRoute.id);
         
         if (error) throw error;
+
+        // Update route terminals
+        await updateRouteTerminals(editingRoute.id);
         
         toast({
           title: "Éxito",
@@ -205,6 +234,11 @@ const GestorRutas = () => {
             .from('routes')
             .update({ image_url: imageUrl })
             .eq('id', data.id);
+        }
+
+        // Save route terminals
+        if (data && selectedTerminals.length > 0) {
+          await saveRouteTerminals(data.id);
         }
 
         // Generate frequencies automatically
@@ -232,6 +266,48 @@ const GestorRutas = () => {
     }
   };
 
+  const saveRouteTerminals = async (routeId: string) => {
+    const terminalData = selectedTerminals.map((terminalId, index) => ({
+      route_id: routeId,
+      terminal_id: terminalId,
+      terminal_order: index + 1
+    }));
+
+    const { error } = await supabase
+      .from('route_terminals')
+      .insert(terminalData);
+
+    if (error) throw error;
+  };
+
+  const updateRouteTerminals = async (routeId: string) => {
+    // Delete existing terminals for this route
+    await supabase
+      .from('route_terminals')
+      .delete()
+      .eq('route_id', routeId);
+
+    // Insert new terminals
+    if (selectedTerminals.length > 0) {
+      await saveRouteTerminals(routeId);
+    }
+  };
+
+  const loadRouteTerminals = async (routeId: string) => {
+    try {
+      const { data, error } = await supabase
+        .from('route_terminals')
+        .select('terminal_id')
+        .eq('route_id', routeId)
+        .order('terminal_order');
+
+      if (error) throw error;
+      setSelectedTerminals(data?.map(rt => rt.terminal_id) || []);
+    } catch (error: any) {
+      console.error('Error loading route terminals:', error);
+    }
+  };
+
   const handleEdit = (route: RouteData) => {
     setEditingRoute(route);
     setFormData({
@@ -244,6 +320,7 @@ const GestorRutas = () => {
       frequency_minutes: route.frequency_minutes,
       status: route.status
     });
+    loadRouteTerminals(route.id);
     setIsDialogOpen(true);
   };
 
@@ -284,6 +361,7 @@ const GestorRutas = () => {
       frequency_minutes: 30,
       status: 'active'
     });
+    setSelectedTerminals([]);
   };
 
   const openNewDialog = () => {
@@ -421,6 +499,31 @@ const GestorRutas = () => {
                       <SelectItem value="maintenance">Mantenimiento</SelectItem>
                     </SelectContent>
                   </Select>
+                </div>
+
+                <div className="space-y-2">
+                  <Label htmlFor="terminals">Terminales de la Ruta</Label>
+                  <div className="space-y-2 max-h-32 overflow-y-auto border p-2 rounded">
+                    {terminals.map((terminal) => (
+                      <label key={terminal.id} className="flex items-center space-x-2">
+                        <input
+                          type="checkbox"
+                          checked={selectedTerminals.includes(terminal.id)}
+                          onChange={(e) => {
+                            if (e.target.checked) {
+                              setSelectedTerminals([...selectedTerminals, terminal.id]);
+                            } else {
+                              setSelectedTerminals(selectedTerminals.filter(id => id !== terminal.id));
+                            }
+                          }}
+                        />
+                        <span className="text-sm">{terminal.name} - {terminal.location}</span>
+                      </label>
+                    ))}
+                  </div>
+                  <p className="text-xs text-muted-foreground">
+                    Seleccione los terminales que comprenden esta ruta
+                  </p>
                 </div>
 
                 <div className="space-y-2">

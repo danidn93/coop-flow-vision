@@ -646,6 +646,45 @@ export type Database = {
           },
         ]
       }
+      route_terminals: {
+        Row: {
+          created_at: string
+          id: string
+          route_id: string
+          terminal_id: string
+          terminal_order: number
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          route_id: string
+          terminal_id: string
+          terminal_order?: number
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          route_id?: string
+          terminal_id?: string
+          terminal_order?: number
+        }
+        Relationships: [
+          {
+            foreignKeyName: "route_terminals_route_id_fkey"
+            columns: ["route_id"]
+            isOneToOne: false
+            referencedRelation: "routes"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "route_terminals_terminal_id_fkey"
+            columns: ["terminal_id"]
+            isOneToOne: false
+            referencedRelation: "terminals"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       routes: {
         Row: {
           base_fare: number | null
