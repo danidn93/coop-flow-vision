@@ -261,6 +261,60 @@ export type Database = {
         }
         Relationships: []
       }
+      draft_route_assignments: {
+        Row: {
+          assigned_by: string
+          assignment_date: string
+          bus_id: string
+          created_at: string
+          first_frequency_time: string
+          id: string
+          is_confirmed: boolean
+          notes: string | null
+          route_id: string
+          updated_at: string
+        }
+        Insert: {
+          assigned_by: string
+          assignment_date: string
+          bus_id: string
+          created_at?: string
+          first_frequency_time: string
+          id?: string
+          is_confirmed?: boolean
+          notes?: string | null
+          route_id: string
+          updated_at?: string
+        }
+        Update: {
+          assigned_by?: string
+          assignment_date?: string
+          bus_id?: string
+          created_at?: string
+          first_frequency_time?: string
+          id?: string
+          is_confirmed?: boolean
+          notes?: string | null
+          route_id?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "draft_route_assignments_bus_id_fkey"
+            columns: ["bus_id"]
+            isOneToOne: false
+            referencedRelation: "buses"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "draft_route_assignments_route_id_fkey"
+            columns: ["route_id"]
+            isOneToOne: false
+            referencedRelation: "routes"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       employee_schedules: {
         Row: {
           created_at: string

@@ -15,7 +15,7 @@ import GestorRutas from "./pages/GestorRutas";
 import GestorFrecuencias from "./pages/GestorFrecuencias";
 import GestorTerminalesPage from "./pages/GestorTerminales";
 import GestorHorariosPage from "./pages/GestorHorarios";
-import AuditLog from "./components/AuditLog";
+import GestorAsignacionesPage from "./pages/GestorAsignaciones";
 import Recompensas from "./pages/Recompensas";
 import ConfiguracionCooperativa from "./pages/ConfiguracionCooperativa";
 import ConfiguracionTema from "./pages/ConfiguracionTema";
@@ -127,6 +127,13 @@ const App = () => (
               <ProtectedRoute allowedRoles={['administrator', 'manager', 'president']}>
                 <DashboardLayout>
                   <GestorHorariosPage />
+                </DashboardLayout>
+              </ProtectedRoute>
+            } />
+            <Route path="/gestor-asignaciones" element={
+              <ProtectedRoute allowedRoles={['administrator', 'manager', 'employee']}>
+                <DashboardLayout>
+                  <GestorAsignacionesPage />
                 </DashboardLayout>
               </ProtectedRoute>
             } />

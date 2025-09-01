@@ -26,9 +26,10 @@ const rawMenuItems = [
   { title: "Solicitudes de Roles", url: "/solicitudes-roles", icon: UserPlus },
   { title: "Buses", url: "/buses", icon: Bus },
   { title: "Rutas", url: "/rutas", icon: MapPin },
-  { title: "Frecuencias", url: "/gestor-frecuencias", icon: Calendar },
   { title: "Terminales", url: "/gestor-terminales", icon: Building },
   { title: "Horarios", url: "/gestor-horarios", icon: Clock },
+  { title: "Asignaciones", url: "/gestor-asignaciones", icon: Calendar },
+  { title: "Frecuencias", url: "/gestor-frecuencias", icon: Calendar },
   { title: "Recompensas", url: "/recompensas", icon: Gift },
   { title: "Chat Soporte", url: "/chat-soporte", icon: MessageSquare },
   { title: "Incidentes", url: "/incidentes", icon: AlertTriangle },
@@ -76,6 +77,7 @@ export function AppSidebar() {
     if (item.url === '/configuracion-cooperativa') return userRole?.role === 'administrator';
     if (item.url === '/gestor-terminales') return ['administrator', 'manager'].includes(userRole?.role || '');
     if (item.url === '/gestor-horarios') return ['administrator', 'manager', 'president'].includes(userRole?.role || '');
+    if (item.url === '/gestor-asignaciones') return ['administrator', 'manager', 'employee'].includes(userRole?.role || '');
     if (item.url === '/auditoria') return ['administrator', 'manager'].includes(userRole?.role || '');
     return true;
   });

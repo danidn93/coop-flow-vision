@@ -104,6 +104,11 @@ const RoleSelector: React.FC<RoleSelectorProps> = ({ userEmail, onRoleSelected, 
 
   const validateRoleSchedule = async (userId: string, role: 'administrator' | 'president' | 'manager' | 'employee' | 'partner' | 'driver' | 'official' | 'client') => {
     try {
+      // Skip validation for all roles except employee
+      if (role !== 'employee') {
+        return { scheduleValid: true };
+      }
+
       const { data, error } = await supabase.rpc('validate_employee_schedule_access', {
         p_user_id: userId,
         p_role: role

@@ -42,7 +42,7 @@ const Auth = () => {
     setLoading(true);
 
     try {
-      // First check if user has multiple roles
+      // Proceed with normal login
       const { data, error } = await supabase.auth.signInWithPassword({
         email,
         password,
@@ -60,7 +60,19 @@ const Auth = () => {
 
         if (rolesError) throw rolesError;
 
-        // If user has multiple roles, show role selector
+        // If user is administrator, skip role selection
+        const hasAdminRole = rolesData?.some(r => r.role === 'administrator');
+        if (hasAdminRole) {
+          localStorage.setItem('selectedRole', 'administrator');
+          toast({
+            title: "¡Bienvenido!",
+            description: "Has iniciado sesión como Administrador",
+          });
+          navigate('/');
+          return;
+        }
+
+        // If user has multiple non-admin roles, show role selector
         if (rolesData && rolesData.length > 1) {
           setShowRoleSelector(true);
           setLoading(false);
