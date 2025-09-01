@@ -72,6 +72,29 @@ const Auth = () => {
           return;
         }
 
+        // If user has employee role and valid schedule, auto-select employee role
+        const hasEmployeeRole = rolesData?.some(r => r.role === 'employee');
+        if (hasEmployeeRole) {
+          try {
+            const { data: scheduleValid, error: scheduleError } = await supabase.rpc('validate_employee_schedule_access', {
+              p_user_id: data.user.id,
+              p_role: 'employee'
+            });
+
+            if (!scheduleError && scheduleValid) {
+              localStorage.setItem('selectedRole', 'employee');
+              toast({
+                title: "¡Bienvenido!",
+                description: "Has iniciado sesión como Empleado",
+              });
+              navigate('/');
+              return;
+            }
+          } catch (error) {
+            console.error('Error validating employee schedule:', error);
+          }
+        }
+
         // If user has multiple non-admin roles, show role selector
         if (rolesData && rolesData.length > 1) {
           setShowRoleSelector(true);
