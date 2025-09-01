@@ -20,7 +20,7 @@ import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { useAuth } from "@/hooks/useAuth";
 
-const rawMenuItems = [
+  const rawMenuItems = [
   { title: "Inicio", url: "/", icon: Home },
   { title: "Usuarios", url: "/usuarios", icon: Users },
   { title: "Solicitudes de Roles", url: "/solicitudes-roles", icon: UserPlus },
@@ -30,6 +30,7 @@ const rawMenuItems = [
   { title: "Recompensas", url: "/recompensas", icon: Gift },
   { title: "Chat Soporte", url: "/chat-soporte", icon: MessageSquare },
   { title: "Incidentes", url: "/incidentes", icon: AlertTriangle },
+  { title: "Gestión Incidentes", url: "/gestion-incidentes", icon: AlertTriangle },
   { title: "Reportes", url: "/reportes", icon: FileText },
   { title: "Configuración", url: "/configuracion", icon: Settings },
   { title: "Config. Cooperativa", url: "/configuracion-cooperativa", icon: Building },
@@ -61,13 +62,15 @@ export function AppSidebar() {
 
   const allowedClient = new Set<string>(["/recompensas", "/chat-soporte", "/incidentes"]);
   const allowedDriverOfficial = new Set<string>(["/", "/chat-soporte", "/incidentes"]);
-  const allowedPartner = new Set<string>(["/", "/gestor-frecuencias", "/incidentes", "/reportes"]);
+  const allowedPartner = new Set<string>(["/", "/incidentes", "/reportes"]);
   
   const menuItems = rawMenuItems.filter((item) => {
     if (userRole?.role === 'client') return allowedClient.has(item.url);
     if (userRole?.role === 'driver' || userRole?.role === 'official') return allowedDriverOfficial.has(item.url);
     if (userRole?.role === 'partner') return allowedPartner.has(item.url);
     if (item.url === '/solicitudes-roles') return userRole?.role === 'administrator';
+    if (item.url === '/gestion-incidentes') return ['administrator', 'manager', 'president', 'employee'].includes(userRole?.role || '');
+    if (item.url === '/configuracion-cooperativa') return userRole?.role === 'administrator';
     return true;
   });
   return (

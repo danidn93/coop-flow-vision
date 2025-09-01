@@ -18,8 +18,8 @@ import ConfiguracionCooperativa from "./pages/ConfiguracionCooperativa";
 import ConfiguracionTema from "./pages/ConfiguracionTema";
 import SolicitudesRoles from "./pages/SolicitudesRoles";
 import ChatSoporte from "./pages/ChatSoporte";
-import ChatBuses from "./pages/ChatBuses";
 import Incidentes from "./pages/Incidentes";
+import GestionIncidentes from "./pages/GestionIncidentes";
 import Reportes from "./pages/Reportes";
 import Configuracion from "./pages/Configuracion";
 import NotFound from "./pages/NotFound";
@@ -58,21 +58,21 @@ const App = () => (
               </ProtectedRoute>
             } />
             <Route path="/usuarios" element={
-              <ProtectedRoute allowedRoles={['administrator', 'manager']}>
+              <ProtectedRoute allowedRoles={['administrator', 'manager', 'employee']}>
                 <DashboardLayout>
                   <GestorUsuarios />
                 </DashboardLayout>
               </ProtectedRoute>
             } />
             <Route path="/buses" element={
-              <ProtectedRoute allowedRoles={['administrator', 'manager', 'partner']}>
+              <ProtectedRoute allowedRoles={['administrator', 'manager', 'partner', 'employee']}>
                 <DashboardLayout>
                   <GestorBuses />
                 </DashboardLayout>
               </ProtectedRoute>
             } />
             <Route path="/rutas" element={
-              <ProtectedRoute allowedRoles={['administrator', 'manager', 'partner']}>
+              <ProtectedRoute allowedRoles={['administrator', 'manager', 'partner', 'employee']}>
                 <DashboardLayout>
                   <GestorRutas />
                 </DashboardLayout>
@@ -93,14 +93,21 @@ const App = () => (
               </ProtectedRoute>
             } />
             <Route path="/reportes" element={
-              <ProtectedRoute allowedRoles={['administrator', 'manager', 'president', 'partner']}>
+              <ProtectedRoute allowedRoles={['administrator', 'manager', 'president', 'partner', 'employee']}>
                 <DashboardLayout>
                   <Reportes />
                 </DashboardLayout>
               </ProtectedRoute>
             } />
+            <Route path="/gestion-incidentes" element={
+              <ProtectedRoute allowedRoles={['administrator', 'manager', 'president', 'employee']}>
+                <DashboardLayout>
+                  <GestionIncidentes />
+                </DashboardLayout>
+              </ProtectedRoute>
+            } />
             <Route path="/gestor-frecuencias" element={
-              <ProtectedRoute allowedRoles={['administrator', 'manager', 'partner']}>
+              <ProtectedRoute allowedRoles={['administrator', 'manager', 'employee', 'president']}>
                 <DashboardLayout>
                   <GestorFrecuencias />
                 </DashboardLayout>

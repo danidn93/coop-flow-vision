@@ -47,7 +47,7 @@ const [startTime, setStartTime] = useState<string>('05:00');
 const [endTime, setEndTime] = useState<string>('22:00');
 const [frequencyMinutes, setFrequencyMinutes] = useState<number>(15);
 
-  const canManage = userRole && ['administrator', 'manager', 'partner'].includes(userRole.role);
+  const canManage = userRole && ['administrator', 'manager', 'employee'].includes(userRole.role);
 
   useEffect(() => {
     loadData();
@@ -195,13 +195,24 @@ const [frequencyMinutes, setFrequencyMinutes] = useState<number>(15);
 
   const cancelFrequency = async (frequencyId: string) => {
     try {
-      // Get current frequency and previous frequency
+      // Get current frequency and calculate time adjustment
       const currentFreq = frequencies.find(f => f.id === frequencyId);
       if (!currentFreq) return;
 
-      const previousFreq = frequencies.find(f => 
-        f.frequency_number === currentFreq.frequency_number - 1
-      );
+      const route = routes.find(r => r.id === currentFreq.route_id);
+      const frequencyIntervalMinutes = route?.frequency_minutes || 15;
+      const timeToAdd = Math.floor(frequencyIntervalMinutes / 2);
+
+      // Find the previous active frequency
+      let previousFreq = null;
+      const currentIndex = frequencies.findIndex(f => f.id === frequencyId);
+      
+      for (let i = currentIndex - 1; i >= 0; i--) {
+        if (frequencies[i].status === 'active') {
+          previousFreq = frequencies[i];
+          break;
+        }
+      }
 
       // Cancel current frequency
       const { error: cancelError } = await supabase
@@ -211,10 +222,10 @@ const [frequencyMinutes, setFrequencyMinutes] = useState<number>(15);
 
       if (cancelError) throw cancelError;
 
-      // If there's a previous frequency, add 5 minutes to its arrival time
+      // If there's a previous active frequency, add half the time
       if (previousFreq) {
         const currentArrival = new Date(`2000-01-01T${previousFreq.arrival_time}`);
-        currentArrival.setMinutes(currentArrival.getMinutes() + 5);
+        currentArrival.setMinutes(currentArrival.getMinutes() + timeToAdd);
         const newArrivalTime = currentArrival.toTimeString().slice(0, 8);
 
         const { error: updateError } = await supabase
@@ -228,12 +239,12 @@ const [frequencyMinutes, setFrequencyMinutes] = useState<number>(15);
         if (previousFreq.assigned_bus_id) {
           const { data: busData } = await supabase
             .from('buses')
-            .select('*, profiles:owner_id(first_name, surname_1)')
+            .select('*')
             .eq('id', previousFreq.assigned_bus_id)
             .single();
 
           if (busData) {
-            const message = `Tu tiempo de ruta ha sido extendido 5 minutos debido a la cancelación de una frecuencia.`;
+            const message = `Tu tiempo de ruta ha sido extendido ${timeToAdd} minutos debido a la cancelación de una frecuencia.`;
             
             // Notify driver
             if (busData.driver_id) {

@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { Users, Bus, MapPin } from "lucide-react";
+import { Users, Bus, MapPin, AlertTriangle, CheckCircle } from "lucide-react";
 import { supabase } from '@/integrations/supabase/client';
 
 export function DashboardStats() {
@@ -24,6 +24,20 @@ export function DashboardStats() {
       value: "0",
       description: "Rutas operativas diarias",
       icon: MapPin,
+      trend: "Cargando...",
+    },
+    {
+      title: "Incidentes Activos",
+      value: "0",
+      description: "Incidentes pendientes de resolver",
+      icon: AlertTriangle,
+      trend: "Cargando...",
+    },
+    {
+      title: "Incidentes Resueltos",
+      value: "0",
+      description: "Total de incidentes resueltos",
+      icon: CheckCircle,
       trend: "Cargando...",
     },
   ]);
@@ -51,6 +65,18 @@ export function DashboardStats() {
         .select('*', { count: 'exact', head: true })
         .eq('status', 'active');
 
+      // Get active incidents count
+      const { count: activeIncidentsCount } = await supabase
+        .from('road_incidents')
+        .select('*', { count: 'exact', head: true })
+        .eq('status', 'activo');
+
+      // Get resolved incidents count
+      const { count: resolvedIncidentsCount } = await supabase
+        .from('road_incidents')
+        .select('*', { count: 'exact', head: true })
+        .eq('status', 'resuelto');
+
       setStats([
         {
           title: "Total Usuarios",
@@ -73,6 +99,20 @@ export function DashboardStats() {
           icon: MapPin,
           trend: "Tiempo real",
         },
+        {
+          title: "Incidentes Activos",
+          value: (activeIncidentsCount || 0).toString(),
+          description: "Incidentes pendientes de resolver",
+          icon: AlertTriangle,
+          trend: "Tiempo real",
+        },
+        {
+          title: "Incidentes Resueltos",
+          value: (resolvedIncidentsCount || 0).toString(),
+          description: "Total de incidentes resueltos",
+          icon: CheckCircle,
+          trend: "Tiempo real",
+        },
       ]);
     } catch (error) {
       console.error('Error loading stats:', error);
@@ -80,7 +120,7 @@ export function DashboardStats() {
   };
 
   return (
-    <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
+    <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-5">
       {stats.map((stat) => (
         <Card key={stat.title}>
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">

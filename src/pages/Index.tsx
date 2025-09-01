@@ -63,7 +63,7 @@ const Index = () => {
     );
   }
 
-  // Admin/Manager/Other roles dashboard
+  // Admin/Manager/Employee/President dashboard with incident stats  
   return (
     <>
       <div className="flex items-center justify-between space-y-2">
