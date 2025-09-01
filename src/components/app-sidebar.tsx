@@ -20,7 +20,7 @@ import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { useAuth } from "@/hooks/useAuth";
 
-const menuItems = [
+const rawMenuItems = [
   { title: "Inicio", url: "/", icon: Home },
   { title: "Usuarios", url: "/usuarios", icon: Users },
   { title: "Solicitudes de Roles", url: "/solicitudes-roles", icon: UserPlus },
@@ -54,12 +54,18 @@ export function AppSidebar() {
       employee: 'Empleado',
       partner: 'Socio',
       driver: 'Conductor',
-      official: 'Dirigente',
+      official: 'Oficial',
       client: 'Cliente'
     };
     return roleNames[role as keyof typeof roleNames] || role;
   };
 
+  const allowedClient = new Set<string>(["/recompensas", "/chat-soporte", "/incidentes"]);
+  const menuItems = rawMenuItems.filter((item) => {
+    if (userRole?.role === 'client') return allowedClient.has(item.url);
+    if (item.url === '/solicitudes-roles') return userRole?.role === 'administrator';
+    return true;
+  });
   return (
     <Sidebar className={isCollapsed ? "w-16" : "w-64"} collapsible="icon">
       <SidebarHeader className="border-b border-border/50 p-4">
