@@ -57,12 +57,12 @@ const handler = async (req: Request): Promise<Response> => {
       { auth: { autoRefreshToken: false, persistSession: false } }
     );
 
-    // Use REST API to check if user exists with specific email
+    // Use REST API to check if user exists with EXACT email match
     console.log('Making request to admin users API...');
     const emailCheckResponse = await fetch(
-      `${Deno.env.get('SUPABASE_URL')}/auth/v1/admin/users?email=${encodeURIComponent(email)}`,
+      `${Deno.env.get('SUPABASE_URL')}/auth/v1/admin/users`,
       {
-        method: 'GET',
+        method: 'GET', 
         headers: {
           'Authorization': `Bearer ${Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')}`,
           'Content-Type': 'application/json',
@@ -79,18 +79,21 @@ const handler = async (req: Request): Promise<Response> => {
       });
     }
 
-    const existingUsers = await emailCheckResponse.json();
-    console.log('API response:', JSON.stringify(existingUsers, null, 2));
+    const allUsers = await emailCheckResponse.json();
+    console.log('API response users count:', allUsers.users?.length || 0);
 
-    if (!existingUsers.users || existingUsers.users.length === 0) {
-      console.log('No user found with email:', email);
+    // Find user with EXACT email match (case insensitive)
+    const user = allUsers.users?.find((u: any) => 
+      u.email && u.email.toLowerCase() === email.toLowerCase()
+    );
+
+    if (!user) {
+      console.log('No exact match found for email:', email);
       return new Response(JSON.stringify({ exists: false }), {
         status: 200,
         headers: { 'Content-Type': 'application/json', ...corsHeaders },
       });
     }
-
-    const user = existingUsers.users[0];
     console.log('Found user:', user.id, 'with email:', user.email);
 
     // Fetch profile

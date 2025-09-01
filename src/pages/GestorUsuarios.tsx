@@ -281,22 +281,24 @@ const GestorUsuarios = () => {
   };
 
   const handleEmailChange = (email: string) => {
+    // Inmediatamente limpiar estado cuando cambia el email
     setFormData({...formData, email});
-    
-    // Reset loaded state when email changes
-    if (userDataLoaded) {
-      setUserDataLoaded(false);
-    }
+    setUserDataLoaded(false);
+    setIsExistingUser(false);
+    setExistingRoles([]);
+    setExistingUserId(null);
   };
 
   // Debounce email checking
+  // Debounce email checking - esperar 1.5 segundos después de dejar de teclear
   useEffect(() => {
     if (formData.email && formData.email.length > 5 && formData.email.includes('@')) {
       const timeoutId = setTimeout(() => {
         checkUserByEmail(formData.email);
-      }, 600);
+      }, 1500); // Aumentado a 1.5 segundos
       return () => clearTimeout(timeoutId);
     } else {
+      // Limpiar estado inmediatamente si email no es válido
       setUserDataLoaded(false);
       setIsExistingUser(false);
       setExistingRoles([]);
