@@ -47,7 +47,7 @@ const [startTime, setStartTime] = useState<string>('05:00');
 const [endTime, setEndTime] = useState<string>('22:00');
 const [frequencyMinutes, setFrequencyMinutes] = useState<number>(15);
 
-  const canManage = userRole && ['administrator', 'manager'].includes(userRole.role);
+  const canManage = userRole && ['administrator', 'manager', 'partner'].includes(userRole.role);
 
   useEffect(() => {
     loadData();

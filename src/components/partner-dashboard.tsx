@@ -161,6 +161,42 @@ export function PartnerDashboard() {
 
   return (
     <div className="space-y-6">
+      {/* Bus Information - Now at the top */}
+      {stats?.bus && (
+        <Card>
+          <CardHeader>
+            <CardTitle>Mi Bus</CardTitle>
+            <CardDescription>
+              Información y estado actual de tu vehículo
+            </CardDescription>
+          </CardHeader>
+          <CardContent>
+            <div className="flex items-center gap-6">
+              {stats.bus.image_url && (
+                <div className="w-24 h-24 rounded-lg overflow-hidden bg-muted">
+                  <img 
+                    src={stats.bus.image_url} 
+                    alt={`Bus ${stats.bus.plate}`}
+                    className="w-full h-full object-cover"
+                  />
+                </div>
+              )}
+              <div className="flex-1">
+                <div className="flex items-center gap-3 mb-2">
+                  <Bus className="h-5 w-5 text-primary" />
+                  <h3 className="text-xl font-semibold">{stats.bus.plate}</h3>
+                  <div className={`w-3 h-3 rounded-full ${getStatusColor(stats.bus.status)}`} />
+                </div>
+                <p className="text-muted-foreground mb-2">{stats.bus.alias || 'Sin alias'}</p>
+                <Badge variant="outline">
+                  {getStatusText(stats.bus.status)}
+                </Badge>
+              </div>
+            </div>
+          </CardContent>
+        </Card>
+      )}
+
       {/* Stats Cards */}
       <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-4">
         <Card>
@@ -217,42 +253,6 @@ export function PartnerDashboard() {
           </CardContent>
         </Card>
       </div>
-
-      {/* Bus Information */}
-      {stats?.bus && (
-        <Card>
-          <CardHeader>
-            <CardTitle>Información del Bus</CardTitle>
-            <CardDescription>
-              Detalles y estado actual de tu vehículo
-            </CardDescription>
-          </CardHeader>
-          <CardContent>
-            <div className="flex items-center gap-6">
-              {stats.bus.image_url && (
-                <div className="w-24 h-24 rounded-lg overflow-hidden bg-muted">
-                  <img 
-                    src={stats.bus.image_url} 
-                    alt={`Bus ${stats.bus.plate}`}
-                    className="w-full h-full object-cover"
-                  />
-                </div>
-              )}
-              <div className="flex-1">
-                <div className="flex items-center gap-3 mb-2">
-                  <Bus className="h-5 w-5 text-primary" />
-                  <h3 className="text-xl font-semibold">{stats.bus.plate}</h3>
-                  <div className={`w-3 h-3 rounded-full ${getStatusColor(stats.bus.status)}`} />
-                </div>
-                <p className="text-muted-foreground mb-2">{stats.bus.alias || 'Sin alias'}</p>
-                <Badge variant="outline">
-                  {getStatusText(stats.bus.status)}
-                </Badge>
-              </div>
-            </div>
-          </CardContent>
-        </Card>
-      )}
 
       {/* Routes Summary */}
       {stats?.routes && stats.routes.length > 0 && (

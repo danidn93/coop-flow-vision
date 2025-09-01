@@ -85,13 +85,6 @@ const App = () => (
                 </DashboardLayout>
               </ProtectedRoute>
             } />
-            <Route path="/chat-buses" element={
-              <ProtectedRoute allowedRoles={['partner', 'driver', 'administrator', 'manager']}>
-                <DashboardLayout>
-                  <ChatBuses />
-                </DashboardLayout>
-              </ProtectedRoute>
-            } />
             <Route path="/incidentes" element={
               <ProtectedRoute>
                 <DashboardLayout>
@@ -100,14 +93,14 @@ const App = () => (
               </ProtectedRoute>
             } />
             <Route path="/reportes" element={
-              <ProtectedRoute allowedRoles={['administrator', 'manager', 'president']}>
+              <ProtectedRoute allowedRoles={['administrator', 'manager', 'president', 'partner']}>
                 <DashboardLayout>
                   <Reportes />
                 </DashboardLayout>
               </ProtectedRoute>
             } />
             <Route path="/gestor-frecuencias" element={
-              <ProtectedRoute allowedRoles={['administrator', 'manager']}>
+              <ProtectedRoute allowedRoles={['administrator', 'manager', 'partner']}>
                 <DashboardLayout>
                   <GestorFrecuencias />
                 </DashboardLayout>
