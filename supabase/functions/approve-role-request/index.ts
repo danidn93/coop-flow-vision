@@ -8,7 +8,8 @@ const corsHeaders = {
 
 interface ApprovalData {
   request_id: string;
-  action: 'approve' | 'reject';
+  approved_roles: string[];
+  rejected_roles: string[];
   notes?: string;
 }
 
@@ -89,9 +90,9 @@ const handler = async (req: Request): Promise<Response> => {
     // Parse request body
     const requestData: ApprovalData = await req.json();
 
-    if (!requestData.request_id || !requestData.action) {
+    if (!requestData.request_id || (!requestData.approved_roles && !requestData.rejected_roles)) {
       return new Response(
-        JSON.stringify({ error: 'ID de solicitud y acción son requeridos' }),
+        JSON.stringify({ error: 'ID de solicitud y roles a aprobar/rechazar son requeridos' }),
         {
           status: 400,
           headers: { 'Content-Type': 'application/json', ...corsHeaders }
@@ -102,7 +103,7 @@ const handler = async (req: Request): Promise<Response> => {
     // Get the role request
     const { data: roleRequest, error: fetchError } = await supabaseAuthed
       .from('role_requests')
-      .select('requester_id, requested_role, status')
+      .select('requester_id, requested_roles, status, approved_roles, rejected_roles')
       .eq('id', requestData.request_id)
       .maybeSingle();
 
@@ -126,11 +127,21 @@ const handler = async (req: Request): Promise<Response> => {
       );
     }
 
-    // Update the role request status
+    // Update the role request with approved/rejected roles
+    const newApprovedRoles = [...(roleRequest.approved_roles || []), ...(requestData.approved_roles || [])];
+    const newRejectedRoles = [...(roleRequest.rejected_roles || []), ...(requestData.rejected_roles || [])];
+    
+    // Determine if all roles have been processed
+    const allRolesProcessed = roleRequest.requested_roles.every((role: string) => 
+      newApprovedRoles.includes(role) || newRejectedRoles.includes(role)
+    );
+
     const { error: updateError } = await supabaseAuthed
       .from('role_requests')
       .update({
-        status: requestData.action === 'approve' ? 'approved' : 'rejected',
+        approved_roles: newApprovedRoles,
+        rejected_roles: newRejectedRoles,
+        status: allRolesProcessed ? 'processed' : 'partial',
         reviewed_at: new Date().toISOString(),
         reviewed_by: user.id,
         notes: requestData.notes || null
@@ -148,19 +159,20 @@ const handler = async (req: Request): Promise<Response> => {
       );
     }
 
-    // If approved, add the role to the user
-    if (requestData.action === 'approve') {
-      const { error: roleAssignError } = await supabaseAuthed
-        .from('user_roles')
-        .insert({
-          user_id: roleRequest.requester_id,
-          role: roleRequest.requested_role
-        });
+    // Add approved roles to user_roles
+    if (requestData.approved_roles && requestData.approved_roles.length > 0) {
+      for (const role of requestData.approved_roles) {
+        const { error: roleAssignError } = await supabaseAuthed
+          .from('user_roles')
+          .insert({
+            user_id: roleRequest.requester_id,
+            role: role
+          });
 
-      if (roleAssignError) {
-        console.error('Error assigning role:', roleAssignError);
-        // Don't fail the entire request if role assignment fails
-        // The request is still marked as approved
+        if (roleAssignError) {
+          console.error('Error assigning role:', roleAssignError);
+          // Don't fail the entire request if role assignment fails
+        }
       }
     }
 
@@ -176,10 +188,13 @@ const handler = async (req: Request): Promise<Response> => {
       client: 'Cliente'
     };
 
-    const roleName = roleNames[roleRequest.requested_role as keyof typeof roleNames] || roleRequest.requested_role;
-    const statusText = requestData.action === 'approve' ? 'aprobada' : 'rechazada';
-    const title = `Solicitud de Rol ${requestData.action === 'approve' ? 'Aprobada' : 'Rechazada'}`;
-    const message = `Tu solicitud para el rol de ${roleName} ha sido ${statusText}.${requestData.notes ? ` Notas: ${requestData.notes}` : ''}`;
+    const approvedText = requestData.approved_roles?.length > 0 ? 
+      `Aprobados: ${requestData.approved_roles.map(r => roleNames[r as keyof typeof roleNames] || r).join(', ')}.` : '';
+    const rejectedText = requestData.rejected_roles?.length > 0 ? 
+      `Rechazados: ${requestData.rejected_roles.map(r => roleNames[r as keyof typeof roleNames] || r).join(', ')}.` : '';
+    
+    const title = 'Respuesta a Solicitud de Roles';
+    const message = `${approvedText} ${rejectedText}${requestData.notes ? ` Notas: ${requestData.notes}` : ''}`;
 
     const { error: notificationError } = await supabaseAuthed
       .from('notifications')
@@ -190,8 +205,8 @@ const handler = async (req: Request): Promise<Response> => {
         type: 'role_response',
         metadata: {
           request_id: requestData.request_id,
-          action: requestData.action,
-          role: roleRequest.requested_role
+          approved_roles: requestData.approved_roles || [],
+          rejected_roles: requestData.rejected_roles || []
         }
       });
 
@@ -201,7 +216,7 @@ const handler = async (req: Request): Promise<Response> => {
 
     return new Response(
       JSON.stringify({ 
-        message: `Solicitud ${statusText} correctamente`
+        message: 'Roles procesados correctamente'
       }),
       {
         status: 200,

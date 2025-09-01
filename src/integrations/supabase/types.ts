@@ -504,33 +504,39 @@ export type Database = {
       }
       role_requests: {
         Row: {
+          approved_roles: Json
           created_at: string
           id: string
           justification: string
           notes: string | null
-          requested_role: Database["public"]["Enums"]["app_role"]
+          rejected_roles: Json
+          requested_roles: Json
           requester_id: string
           reviewed_at: string | null
           reviewed_by: string | null
           status: string
         }
         Insert: {
+          approved_roles?: Json
           created_at?: string
           id?: string
           justification: string
           notes?: string | null
-          requested_role: Database["public"]["Enums"]["app_role"]
+          rejected_roles?: Json
+          requested_roles?: Json
           requester_id: string
           reviewed_at?: string | null
           reviewed_by?: string | null
           status?: string
         }
         Update: {
+          approved_roles?: Json
           created_at?: string
           id?: string
           justification?: string
           notes?: string | null
-          requested_role?: Database["public"]["Enums"]["app_role"]
+          rejected_roles?: Json
+          requested_roles?: Json
           requester_id?: string
           reviewed_at?: string | null
           reviewed_by?: string | null

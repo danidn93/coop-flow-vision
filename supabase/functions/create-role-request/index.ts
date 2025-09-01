@@ -122,24 +122,26 @@ const handler = async (req: Request): Promise<Response> => {
       );
     }
 
-    // Create role request records for each requested role
-    const roleRequestPromises = requestData.requested_roles.map(async (role) => {
-      const { error: roleRequestError } = await supabaseAuthed
-        .from('role_requests')
-        .insert({
-          requester_id: user.id,
-          requested_role: role,
-          justification: requestData.justification,
-          status: 'pending'
-        });
+    // Create a single role request with multiple roles
+    const { error: roleRequestError } = await supabaseAuthed
+      .from('role_requests')
+      .insert({
+        requester_id: user.id,
+        requested_roles: requestData.requested_roles,
+        justification: requestData.justification,
+        status: 'pending'
+      });
 
-      if (roleRequestError) {
-        console.error('Error creating role request:', roleRequestError);
-        throw roleRequestError;
-      }
-    });
-
-    await Promise.all(roleRequestPromises);
+    if (roleRequestError) {
+      console.error('Error creating role request:', roleRequestError);
+      return new Response(
+        JSON.stringify({ error: 'Error creando solicitud de roles' }),
+        {
+          status: 500,
+          headers: { 'Content-Type': 'application/json', ...corsHeaders }
+        }
+      );
+    }
 
     // Create notifications for all administrators
     const roleNames = {
@@ -169,6 +171,7 @@ const handler = async (req: Request): Promise<Response> => {
           type: 'role_request',
           metadata: {
             requester_id: user.id,
+            request_id: null, // Will be populated after insert
             requested_roles: requestData.requested_roles,
             justification: requestData.justification
           }
