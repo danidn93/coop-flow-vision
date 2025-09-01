@@ -27,10 +27,13 @@ interface AuthContextType {
   session: Session | null;
   profile: Profile | null;
   userRole: UserRole | null;
+  userRoles: UserRole[];
+  activeRole: string | null;
   loading: boolean;
   signUp: (email: string, password: string, userData: Omit<Profile, 'id' | 'user_id'>) => Promise<{ error: Error | null }>;
   signIn: (email: string, password: string) => Promise<{ error: Error | null }>;
   signOut: () => Promise<void>;
+  switchRole: (role: string) => void;
 }
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
@@ -48,6 +51,8 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
   const [session, setSession] = useState<Session | null>(null);
   const [profile, setProfile] = useState<Profile | null>(null);
   const [userRole, setUserRole] = useState<UserRole | null>(null);
+  const [userRoles, setUserRoles] = useState<UserRole[]>([]);
+  const [activeRole, setActiveRole] = useState<string | null>(null);
   const [loading, setLoading] = useState(true);
 
   const fetchProfile = async (userId: string) => {
@@ -73,7 +78,7 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
     try {
       const { data, error } = await supabase
         .from('user_roles')
-        .select('role')
+        .select('id, user_id, role')
         .eq('user_id', userId);
 
       if (error) {
@@ -81,14 +86,62 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
         return;
       }
 
-      const roles = (data || []).map((r: any) => r.role);
-      const priority = ['administrator', 'manager', 'partner', 'employee', 'official', 'driver', 'client'] as const;
-      const selected = priority.find((r) => roles.includes(r)) || null;
+      const roles = data || [];
+      setUserRoles(roles);
 
-      setUserRole(selected ? { id: 'computed', user_id: userId, role: selected } as any : null);
+      // Get stored active role or select priority role
+      const storedRole = localStorage.getItem(`activeRole_${userId}`);
+      const availableRoles = roles.map(r => r.role);
+      
+      let selectedRole: string | null = null;
+      
+      if (storedRole && availableRoles.includes(storedRole as any)) {
+        selectedRole = storedRole;
+      } else {
+        // Default priority selection
+        const priority = ['administrator', 'president', 'manager', 'employee', 'partner', 'official', 'driver', 'client'] as const;
+        selectedRole = priority.find(r => availableRoles.includes(r as any)) || availableRoles[0] || null;
+      }
+
+      setActiveRole(selectedRole);
+      
+      const activeRoleData = roles.find(r => r.role === selectedRole);
+      setUserRole(activeRoleData || null);
+      
+      if (selectedRole) {
+        localStorage.setItem(`activeRole_${userId}`, selectedRole);
+      }
     } catch (error) {
       console.error('Error fetching user role:', error);
     }
+  };
+
+  const switchRole = (role: string) => {
+    if (user && userRoles.some(r => r.role === role)) {
+      setActiveRole(role);
+      const roleData = userRoles.find(r => r.role === role);
+      setUserRole(roleData || null);
+      localStorage.setItem(`activeRole_${user.id}`, role);
+      
+      toast({
+        title: "Rol cambiado",
+        description: `Ahora estás usando el rol: ${getRoleDisplayName(role)}`
+      });
+    }
+  };
+
+  const getRoleDisplayName = (role: string) => {
+    const roleNames = {
+      administrator: 'Administrador',
+      president: 'Presidente',
+      manager: 'Manager',
+      employee: 'Empleado',
+      partner: 'Socio',
+      driver: 'Conductor',
+      official: 'Dirigente',
+      client: 'Cliente'
+    };
+    return roleNames[role as keyof typeof roleNames] || role;
   };
 
   useEffect(() => {
@@ -107,6 +160,8 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
         } else {
           setProfile(null);
           setUserRole(null);
+          setUserRoles([]);
+          setActiveRole(null);
         }
         
         setLoading(false);
@@ -173,6 +228,8 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
       // Clean up existing state
       setProfile(null);
       setUserRole(null);
+      setUserRoles([]);
+      setActiveRole(null);
       
       const { error } = await supabase.auth.signInWithPassword({
         email,
@@ -205,6 +262,13 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
       // Clean up auth state
       setProfile(null);
       setUserRole(null);
+      setUserRoles([]);
+      setActiveRole(null);
+      
+      // Clear stored active role
+      if (user) {
+        localStorage.removeItem(`activeRole_${user.id}`);
+      }
       
       await supabase.auth.signOut({ scope: 'global' });
       
@@ -222,10 +286,13 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
     session,
     profile,
     userRole,
+    userRoles,
+    activeRole,
     loading,
     signUp,
     signIn,
     signOut,
+    switchRole,
   };
 
   return (

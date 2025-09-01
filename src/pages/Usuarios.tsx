@@ -17,9 +17,9 @@ interface UserData {
   phone: string;
   address: string;
   created_at: string;
-  user_roles?: {
+  user_roles?: Array<{
     role: string;
-  } | null;
+  }>;
 }
 
 const Usuarios = () => {
@@ -51,10 +51,10 @@ const Usuarios = () => {
 
       // Combine the data
       const usersWithRoles = (profilesData || []).map(profile => {
-        const userRole = rolesData?.find(role => role.user_id === profile.user_id);
+        const userRoles = rolesData?.filter(role => role.user_id === profile.user_id) || [];
         return {
           ...profile,
-          user_roles: userRole ? { role: userRole.role } : null
+          user_roles: userRoles.map(r => ({ role: r.role }))
         };
       });
 
@@ -112,10 +112,13 @@ const Usuarios = () => {
     };
 
     users.forEach(user => {
-      const role = user.user_roles?.role;
-      if (role && role in stats) {
-        stats[role as keyof typeof stats]++;
-      }
+      const roles = user.user_roles || [];
+      roles.forEach(userRole => {
+        const role = userRole.role;
+        if (role && role in stats) {
+          stats[role as keyof typeof stats]++;
+        }
+      });
     });
 
     return stats;
@@ -299,12 +302,23 @@ const Usuarios = () => {
                   <p className="text-sm text-muted-foreground">C.I. {user.id_number}</p>
                   <p className="text-sm text-muted-foreground">{user.phone}</p>
                 </div>
-                <Badge 
-                  variant={getRoleBadgeVariant(user.user_roles?.role || 'client')}
-                  className="text-xs"
-                >
-                  {getRoleDisplayName(user.user_roles?.role || 'client')}
-                </Badge>
+                <div className="flex flex-col gap-2 items-end">
+                  {user.user_roles && user.user_roles.length > 0 ? (
+                    user.user_roles.map((userRole, index) => (
+                      <Badge 
+                        key={index}
+                        variant={getRoleBadgeVariant(userRole.role)}
+                        className="text-xs"
+                      >
+                        {getRoleDisplayName(userRole.role)}
+                      </Badge>
+                    ))
+                  ) : (
+                    <Badge variant="outline" className="text-xs">
+                      Sin rol asignado
+                    </Badge>
+                  )}
+                </div>
               </div>
             ))}
             {filteredUsers.length === 0 && (

@@ -3,6 +3,7 @@ import { SidebarTrigger } from "@/components/ui/sidebar";
 import { Clock, Calendar } from "lucide-react";
 import { format } from 'date-fns';
 import { es } from 'date-fns/locale';
+import { RoleSwitcher } from '@/components/role-switcher';
 
 export function DashboardHeader() {
   const [currentTime, setCurrentTime] = useState(new Date());
@@ -17,8 +18,8 @@ export function DashboardHeader() {
 
   return (
     <header className="sticky top-0 z-40 w-full border-b bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60">
-      <div className="container flex h-14 max-w-screen-2xl items-center">
-        <div className="mr-4 flex">
+      <div className="container flex h-14 max-w-screen-2xl items-center justify-between">
+        <div className="flex items-center">
           <SidebarTrigger className="mr-6" />
           <div className="flex items-center space-x-4">
             <div className="flex items-center space-x-2">
@@ -34,6 +35,9 @@ export function DashboardHeader() {
               </span>
             </div>
           </div>
+        </div>
+        <div className="flex items-center">
+          <RoleSwitcher />
         </div>
       </div>
     </header>
