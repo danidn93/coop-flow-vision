@@ -2,6 +2,7 @@ import { useState, useEffect } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
+import { Input } from "@/components/ui/input";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
 import { supabase } from '@/integrations/supabase/client';
@@ -38,10 +39,13 @@ const GestorFrecuencias = () => {
   const [routes, setRoutes] = useState<any[]>([]);
   const [buses, setBuses] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
-  const [selectedRoute, setSelectedRoute] = useState<string>('');
-  const [isAssignDialogOpen, setIsAssignDialogOpen] = useState(false);
-  const [selectedFrequency, setSelectedFrequency] = useState<RouteFrequency | null>(null);
-  const [selectedBus, setSelectedBus] = useState<string>('');
+const [selectedRoute, setSelectedRoute] = useState<string>('');
+const [isAssignDialogOpen, setIsAssignDialogOpen] = useState(false);
+const [selectedFrequency, setSelectedFrequency] = useState<RouteFrequency | null>(null);
+const [selectedBus, setSelectedBus] = useState<string>('');
+const [startTime, setStartTime] = useState<string>('05:00');
+const [endTime, setEndTime] = useState<string>('22:00');
+const [frequencyMinutes, setFrequencyMinutes] = useState<number>(15);
 
   const canManage = userRole && ['administrator', 'manager'].includes(userRole.role);
 
@@ -111,6 +115,23 @@ const GestorFrecuencias = () => {
         description: "No se pudieron cargar las frecuencias",
         variant: "destructive",
       });
+    }
+  };
+
+  const generateFrequencies = async () => {
+    if (!selectedRoute) return;
+    try {
+      const { error } = await supabase.rpc('generate_route_frequencies', {
+        p_route_id: selectedRoute,
+        p_frequency_minutes: frequencyMinutes,
+        p_start_time: `${startTime}:00`,
+        p_end_time: `${endTime}:00`,
+      });
+      if (error) throw error;
+      toast({ title: 'Frecuencias generadas', description: 'Se actualizaron las frecuencias de la ruta.' });
+      loadFrequencies(selectedRoute);
+    } catch (error: any) {
+      toast({ title: 'Error', description: 'No se pudieron generar las frecuencias', variant: 'destructive' });
     }
   };
 
@@ -318,8 +339,27 @@ const GestorFrecuencias = () => {
               Frecuencias de la Ruta
             </CardTitle>
           </CardHeader>
-          <CardContent>
-            <div className="space-y-4">
+<CardContent>
+  <div className="space-y-6">
+    <div className="grid gap-4 md:grid-cols-3">
+      <div>
+        <label className="block text-sm font-medium mb-2">Desde</label>
+        <Input type="time" value={startTime} onChange={(e) => setStartTime(e.target.value)} />
+      </div>
+      <div>
+        <label className="block text-sm font-medium mb-2">Hasta</label>
+        <Input type="time" value={endTime} onChange={(e) => setEndTime(e.target.value)} />
+      </div>
+      <div>
+        <label className="block text-sm font-medium mb-2">Cada (min)</label>
+        <Input type="number" min={1} value={frequencyMinutes} onChange={(e) => setFrequencyMinutes(parseInt(e.target.value) || 1)} />
+      </div>
+    </div>
+    {canManage && (
+      <div className="flex justify-end">
+        <Button onClick={generateFrequencies}>Generar frecuencias</Button>
+      </div>
+    )}
               {frequencies.length === 0 ? (
                 <div className="text-center py-8 text-muted-foreground">
                   No hay frecuencias configuradas para esta ruta.

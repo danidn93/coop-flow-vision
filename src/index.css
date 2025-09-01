@@ -43,6 +43,9 @@ All colors MUST be HSL.
 
     --radius: 0.5rem;
 
+    /* App background image (runtime configurable) */
+    --app-background-image: none;
+
     --sidebar-background: 0 0% 98%;
 
     --sidebar-foreground: 240 5.3% 26.1%;
@@ -105,9 +108,13 @@ All colors MUST be HSL.
     @apply border-border;
   }
 
-  body {
-    @apply bg-background text-foreground font-sans;
-  }
+body {
+  @apply bg-background text-foreground font-sans;
+  background-image: var(--app-background-image);
+  background-size: cover;
+  background-position: center;
+  background-attachment: fixed;
+}
 
   h1, h2, h3, h4, h5, h6 {
     @apply font-bold;

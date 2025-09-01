@@ -24,6 +24,9 @@ interface CooperativeConfig {
   phone: string;
   email: string;
   logo_url?: string;
+  background_image_url?: string;
+  primary_color?: string; // H S% L% format
+  secondary_color?: string; // H S% L% format
   max_daily_tickets: number;
   reward_points_per_ticket: number;
 }
@@ -43,20 +46,23 @@ const ConfiguracionCooperativa = () => {
   const [config, setConfig] = useState<CooperativeConfig | null>(null);
   const [rewards, setRewards] = useState<Reward[]>([]);
   const [loading, setLoading] = useState(true);
-  const [logoFile, setLogoFile] = useState<File | null>(null);
-  const [rewardImageFile, setRewardImageFile] = useState<File | null>(null);
-  const [isRewardDialogOpen, setIsRewardDialogOpen] = useState(false);
-  const [editingReward, setEditingReward] = useState<Reward | null>(null);
+const [logoFile, setLogoFile] = useState<File | null>(null);
+const [backgroundFile, setBackgroundFile] = useState<File | null>(null);
+const [rewardImageFile, setRewardImageFile] = useState<File | null>(null);
+const [isRewardDialogOpen, setIsRewardDialogOpen] = useState(false);
+const [editingReward, setEditingReward] = useState<Reward | null>(null);
   
-  const [formData, setFormData] = useState({
-    name: '',
-    ruc: '',
-    address: '',
-    phone: '',
-    email: '',
-    max_daily_tickets: 5,
-    reward_points_per_ticket: 10
-  });
+const [formData, setFormData] = useState({
+  name: '',
+  ruc: '',
+  address: '',
+  phone: '',
+  email: '',
+  max_daily_tickets: 5,
+  reward_points_per_ticket: 10,
+  primary_color: '215 85% 20%',
+  secondary_color: '215 40% 90%'
+});
 
   const [newReward, setNewReward] = useState({
     name: '',
@@ -91,18 +97,25 @@ const ConfiguracionCooperativa = () => {
 
       if (rewardsError) throw rewardsError;
 
-      if (configData) {
-        setConfig(configData);
-        setFormData({
-          name: configData.name,
-          ruc: configData.ruc || '',
-          address: configData.address || '',
-          phone: configData.phone || '',
-          email: configData.email || '',
-          max_daily_tickets: configData.max_daily_tickets,
-          reward_points_per_ticket: configData.reward_points_per_ticket
-        });
-      }
+if (configData) {
+  setConfig(configData);
+  setFormData({
+    name: configData.name,
+    ruc: configData.ruc || '',
+    address: configData.address || '',
+    phone: configData.phone || '',
+    email: configData.email || '',
+    max_daily_tickets: configData.max_daily_tickets,
+    reward_points_per_ticket: configData.reward_points_per_ticket,
+    primary_color: configData.primary_color || '215 85% 20%',
+    secondary_color: configData.secondary_color || '215 40% 90%'
+  });
+  applyTheme({
+    primary: configData.primary_color,
+    secondary: configData.secondary_color,
+    backgroundImageUrl: configData.background_image_url,
+  });
+}
 
       setRewards(rewardsData || []);
     } catch (error: any) {
@@ -116,27 +129,49 @@ const ConfiguracionCooperativa = () => {
     }
   };
 
-  const uploadLogo = async (file: File) => {
-    try {
-      const fileExt = file.name.split('.').pop();
-      const fileName = `logo.${fileExt}`;
-      const filePath = `cooperative-logos/${fileName}`;
+const uploadLogo = async (file: File) => {
+  try {
+    const fileExt = file.name.split('.').pop();
+    const fileName = `logo.${fileExt}`;
+    const filePath = `cooperative-logos/${fileName}`;
 
-      const { error: uploadError } = await supabase.storage
-        .from('cooperative-logos')
-        .upload(filePath, file, { upsert: true });
+    const { error: uploadError } = await supabase.storage
+      .from('cooperative-logos')
+      .upload(filePath, file, { upsert: true });
 
-      if (uploadError) throw uploadError;
+    if (uploadError) throw uploadError;
 
-      const { data: { publicUrl } } = supabase.storage
-        .from('cooperative-logos')
-        .getPublicUrl(filePath);
+    const { data: { publicUrl } } = supabase.storage
+      .from('cooperative-logos')
+      .getPublicUrl(filePath);
 
-      return publicUrl;
-    } catch (error: any) {
-      throw error;
-    }
-  };
+    return publicUrl;
+  } catch (error: any) {
+    throw error;
+  }
+};
+
+const uploadBackground = async (file: File) => {
+  try {
+    const fileExt = file.name.split('.').pop();
+    const fileName = `background-${Date.now()}.${fileExt}`;
+    const filePath = `cooperative-logos/${fileName}`;
+
+    const { error: uploadError } = await supabase.storage
+      .from('cooperative-logos')
+      .upload(filePath, file, { upsert: true });
+
+    if (uploadError) throw uploadError;
+
+    const { data: { publicUrl } } = supabase.storage
+      .from('cooperative-logos')
+      .getPublicUrl(filePath);
+
+    return publicUrl;
+  } catch (error: any) {
+    throw error;
+  }
+};
 
   const uploadRewardImage = async (file: File, rewardId: string) => {
     try {
@@ -160,47 +195,61 @@ const ConfiguracionCooperativa = () => {
     }
   };
 
-  const handleSubmitConfig = async (e: React.FormEvent) => {
-    e.preventDefault();
-    
-    try {
-      let updateData: any = { ...formData };
-      
-      if (logoFile) {
-        const logoUrl = await uploadLogo(logoFile);
-        updateData.logo_url = logoUrl;
-      }
-      if (config?.id) {
-        const { error } = await supabase
-          .from('cooperative_config')
-          .update(updateData)
-          .eq('id', config.id);
-        if (error) throw error;
-      } else {
-        const { data, error } = await supabase
-          .from('cooperative_config')
-          .insert([updateData])
-          .select()
-          .single();
-        if (error) throw error;
-        if (data) setConfig(data as any);
-      }
+const handleSubmitConfig = async (e: React.FormEvent) => {
+  e.preventDefault();
+  
+  try {
+    let updateData: any = { ...formData };
 
-      toast({
-        title: "Éxito",
-        description: "Configuración actualizada correctamente",
-      });
-
-      setLogoFile(null);
-      loadData();
-    } catch (error: any) {
-      toast({
-        title: "Error",
-        description: "No se pudo actualizar la configuración",
-        variant: "destructive",
-      });
+    if (logoFile) {
+      const logoUrl = await uploadLogo(logoFile);
+      updateData.logo_url = logoUrl;
     }
-  };
+
+    if (backgroundFile) {
+      const bgUrl = await uploadBackground(backgroundFile);
+      updateData.background_image_url = bgUrl;
+    }
+
+    if (config?.id) {
+      const { error } = await supabase
+        .from('cooperative_config')
+        .update(updateData)
+        .eq('id', config.id);
+      if (error) throw error;
+    } else {
+      const { data, error } = await supabase
+        .from('cooperative_config')
+        .insert([updateData])
+        .select()
+        .single();
+      if (error) throw error;
+      if (data) setConfig(data as any);
+    }
+
+    // Apply theme immediately
+    applyTheme({
+      primary: updateData.primary_color,
+      secondary: updateData.secondary_color,
+      backgroundImageUrl: updateData.background_image_url ?? config?.background_image_url,
+    });
+
+    toast({
+      title: "Éxito",
+      description: "Configuración actualizada correctamente",
+    });
+
+    setLogoFile(null);
+    setBackgroundFile(null);
+    loadData();
+  } catch (error: any) {
+    toast({
+      title: "Error",
+      description: "No se pudo actualizar la configuración",
+      variant: "destructive",
+    });
+  }
+};
 
   const handleSubmitReward = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -296,17 +345,29 @@ const ConfiguracionCooperativa = () => {
     setIsRewardDialogOpen(true);
   };
 
-  if (!isAdmin) {
-    return (
-      <div className="flex items-center justify-center h-96">
-        <div className="text-center">
-          <Shield className="h-16 w-16 text-muted-foreground mx-auto mb-4" />
-          <h2 className="text-xl font-semibold mb-2">Acceso Restringido</h2>
-          <p className="text-muted-foreground">Solo los administradores pueden acceder a esta sección.</p>
-        </div>
+if (!isAdmin) {
+  return (
+    <div className="flex items-center justify-center h-96">
+      <div className="text-center">
+        <Shield className="h-16 w-16 text-muted-foreground mx-auto mb-4" />
+        <h2 className="text-xl font-semibold mb-2">Acceso Restringido</h2>
+        <p className="text-muted-foreground">Solo los administradores pueden acceder a esta sección.</p>
       </div>
-    );
+    </div>
+  );
+}
+
+// Aplica el tema (colores y fondo) en tiempo real
+const applyTheme = ({ primary, secondary, backgroundImageUrl }: { primary?: string; secondary?: string; backgroundImageUrl?: string | null; }) => {
+  const root = document.documentElement;
+  if (primary) root.style.setProperty('--primary', primary);
+  if (secondary) root.style.setProperty('--secondary', secondary);
+  if (backgroundImageUrl) {
+    root.style.setProperty('--app-background-image', `url('${backgroundImageUrl}')`);
+  } else {
+    root.style.setProperty('--app-background-image', 'none');
   }
+};
 
   if (loading) {
     return (
@@ -391,27 +452,69 @@ const ConfiguracionCooperativa = () => {
                   />
                 </div>
 
-                <div>
-                  <Label htmlFor="logo">Logo de la Cooperativa</Label>
-                  <div className="space-y-2">
-                    <input
-                      type="file"
-                      accept="image/*"
-                      onChange={(e) => setLogoFile(e.target.files?.[0] || null)}
-                      className="w-full p-2 border rounded"
-                    />
-                    {config?.logo_url && (
-                      <div className="flex items-center space-x-2">
-                        <img 
-                          src={config.logo_url} 
-                          alt="Logo actual" 
-                          className="w-16 h-16 object-cover rounded"
-                        />
-                        <span className="text-sm text-muted-foreground">Logo actual</span>
-                      </div>
-                    )}
-                  </div>
-                </div>
+<div>
+  <Label htmlFor="logo">Logo de la Cooperativa</Label>
+  <div className="space-y-2">
+    <input
+      type="file"
+      accept="image/*"
+      onChange={(e) => setLogoFile(e.target.files?.[0] || null)}
+      className="w-full p-2 border rounded"
+    />
+    {config?.logo_url && (
+      <div className="flex items-center space-x-2">
+        <img 
+          src={config.logo_url} 
+          alt="Logo actual" 
+          className="w-16 h-16 object-cover rounded"
+        />
+        <span className="text-sm text-muted-foreground">Logo actual</span>
+      </div>
+    )}
+  </div>
+</div>
+
+<div>
+  <Label htmlFor="background">Imagen de Fondo</Label>
+  <div className="space-y-2">
+    <input
+      type="file"
+      accept="image/*"
+      onChange={(e) => setBackgroundFile(e.target.files?.[0] || null)}
+      className="w-full p-2 border rounded"
+    />
+    {config?.background_image_url && (
+      <div className="flex items-center space-x-2">
+        <img 
+          src={config.background_image_url} 
+          alt="Fondo actual" 
+          className="w-16 h-16 object-cover rounded"
+        />
+        <span className="text-sm text-muted-foreground">Fondo actual</span>
+      </div>
+    )}
+  </div>
+</div>
+
+<div className="grid gap-4 md:grid-cols-2">
+  <div>
+    <Label>Color Primario</Label>
+    <Input
+      value={formData.primary_color}
+      onChange={(e) => setFormData({ ...formData, primary_color: e.target.value })}
+      placeholder="Ej: 215 85% 20%"
+    />
+    <p className="text-xs text-muted-foreground mt-1">Usa formato H S% L% (HSL)</p>
+  </div>
+  <div>
+    <Label>Color Secundario</Label>
+    <Input
+      value={formData.secondary_color}
+      onChange={(e) => setFormData({ ...formData, secondary_color: e.target.value })}
+      placeholder="Ej: 215 40% 90%"
+    />
+  </div>
+</div>
 
                 <Button type="submit" className="w-full">
                   <Settings className="mr-2 h-4 w-4" />

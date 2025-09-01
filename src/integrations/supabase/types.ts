@@ -177,6 +177,7 @@ export type Database = {
       cooperative_config: {
         Row: {
           address: string | null
+          background_image_url: string | null
           created_at: string
           email: string | null
           id: string
@@ -184,12 +185,15 @@ export type Database = {
           max_daily_tickets: number
           name: string
           phone: string | null
+          primary_color: string | null
           reward_points_per_ticket: number
           ruc: string | null
+          secondary_color: string | null
           updated_at: string
         }
         Insert: {
           address?: string | null
+          background_image_url?: string | null
           created_at?: string
           email?: string | null
           id?: string
@@ -197,12 +201,15 @@ export type Database = {
           max_daily_tickets?: number
           name?: string
           phone?: string | null
+          primary_color?: string | null
           reward_points_per_ticket?: number
           ruc?: string | null
+          secondary_color?: string | null
           updated_at?: string
         }
         Update: {
           address?: string | null
+          background_image_url?: string | null
           created_at?: string
           email?: string | null
           id?: string
@@ -210,8 +217,10 @@ export type Database = {
           max_daily_tickets?: number
           name?: string
           phone?: string | null
+          primary_color?: string | null
           reward_points_per_ticket?: number
           ruc?: string | null
+          secondary_color?: string | null
           updated_at?: string
         }
         Relationships: []

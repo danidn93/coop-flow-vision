@@ -141,23 +141,44 @@ serve(async (req) => {
             }
           });
 
-          // Upsert profile and role
-          await supabaseAdmin
-            .from('profiles')
-            .upsert({
-              user_id: user.id,
-              first_name: userData.first_name,
-              middle_name: userData.middle_name,
-              surname_1: userData.surname_1,
-              surname_2: userData.surname_2,
-              id_number: userData.id_number,
-              phone: userData.phone,
-              address: userData.address
-            }, { onConflict: 'user_id' });
+// Ensure profile exists and is up to date
+const { data: existingProf } = await supabaseAdmin
+  .from('profiles')
+  .select('user_id')
+  .eq('user_id', user.id)
+  .maybeSingle();
 
-          await supabaseAdmin
-            .from('user_roles')
-            .upsert({ user_id: user.id, role: userData.role }, { onConflict: 'user_id,role' });
+if (existingProf) {
+  await supabaseAdmin
+    .from('profiles')
+    .update({
+      first_name: userData.first_name,
+      middle_name: userData.middle_name,
+      surname_1: userData.surname_1,
+      surname_2: userData.surname_2,
+      id_number: userData.id_number,
+      phone: userData.phone,
+      address: userData.address
+    })
+    .eq('user_id', user.id);
+} else {
+  await supabaseAdmin
+    .from('profiles')
+    .insert({
+      user_id: user.id,
+      first_name: userData.first_name,
+      middle_name: userData.middle_name,
+      surname_1: userData.surname_1,
+      surname_2: userData.surname_2,
+      id_number: userData.id_number,
+      phone: userData.phone,
+      address: userData.address
+    });
+}
+
+// Set single role deterministically
+await supabaseAdmin.from('user_roles').delete().eq('user_id', user.id);
+await supabaseAdmin.from('user_roles').insert({ user_id: user.id, role: userData.role });
 
           results.push({
             email: userData.email,
