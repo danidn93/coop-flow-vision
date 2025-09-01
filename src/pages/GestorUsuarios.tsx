@@ -60,7 +60,7 @@ const GestorUsuarios = () => {
     loadUsers();
   }, []);
 
-  const isAdmin = userRole?.role === 'administrator';
+  const canManageUsers = userRole && ['administrator', 'employee'].includes(userRole.role);
 
   const loadUsers = async () => {
     try {
@@ -431,7 +431,7 @@ const GestorUsuarios = () => {
             Administra los usuarios y roles del sistema
           </p>
         </div>
-        {isAdmin && (
+        {canManageUsers && (
           <Dialog open={isDialogOpen} onOpenChange={setIsDialogOpen}>
             <DialogTrigger asChild>
               <Button>
@@ -718,7 +718,7 @@ const GestorUsuarios = () => {
                   </Badge>
                 </div>
                 <div className="flex justify-end">
-                  {isAdmin && (
+                  {canManageUsers && (
                     <Button
                       size="sm"
                       variant="ghost"

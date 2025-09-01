@@ -57,7 +57,7 @@ const GestorBuses = () => {
     plate: '',
     alias: '',
     capacity: 45,
-    status: 'en_servicio',
+    status: 'disponible',
     owner_id: '',
     driver_id: '',
     official_id: '',
@@ -70,7 +70,7 @@ const GestorBuses = () => {
     loadUsers();
   }, []);
 
-  const canManageBuses = userRole && ['administrator', 'manager', 'partner'].includes(userRole.role);
+  const canManageBuses = userRole && ['administrator', 'manager', 'employee', 'partner'].includes(userRole.role);
 
   const loadBuses = async () => {
     try {
@@ -238,7 +238,7 @@ const GestorBuses = () => {
       plate: '',
       alias: '',
       capacity: 45,
-      status: 'en_servicio',
+      status: 'disponible',
       owner_id: '',
       driver_id: 'unassigned',
       official_id: 'unassigned',
@@ -257,6 +257,7 @@ const GestorBuses = () => {
       'en_servicio': { label: 'En Servicio', variant: 'default' as const },
       'disponible': { label: 'Disponible', variant: 'secondary' as const },
       'mantenimiento': { label: 'Mantenimiento', variant: 'destructive' as const },
+      'en_tour': { label: 'En Tour', variant: 'default' as const },
       'fuera_de_servicio': { label: 'Fuera de Servicio', variant: 'outline' as const }
     };
     
@@ -331,8 +332,8 @@ const GestorBuses = () => {
                 </div>
                 
                 <div className="space-y-2">
-                  <Label htmlFor="owner">Propietario (Socio)</Label>
-                  <Select value={formData.owner_id} onValueChange={(value) => setFormData({...formData, owner_id: value})}>
+                  <Label htmlFor="owner">Propietario (Socio) *</Label>
+                  <Select value={formData.owner_id} onValueChange={(value) => setFormData({...formData, owner_id: value})} required>
                     <SelectTrigger>
                       <SelectValue placeholder="Seleccionar propietario" />
                     </SelectTrigger>
@@ -345,72 +346,77 @@ const GestorBuses = () => {
                     </SelectContent>
                   </Select>
                 </div>
-                
-                <div className="space-y-2">
-                  <Label htmlFor="driver">Conductor</Label>
-                  <Select value={formData.driver_id} onValueChange={(value) => setFormData({...formData, driver_id: value})}>
-                    <SelectTrigger>
-                      <SelectValue placeholder="Seleccionar conductor" />
-                    </SelectTrigger>
-                    <SelectContent>
-                      <SelectItem value="unassigned">Sin asignar</SelectItem>
-                      {drivers.map((driver) => (
-                        <SelectItem key={driver.user_id} value={driver.user_id}>
-                          {driver.first_name} {driver.surname_1}
-                        </SelectItem>
-                      ))}
-                    </SelectContent>
-                  </Select>
-                </div>
-                
-                <div className="space-y-2">
-                  <Label htmlFor="official">Oficial</Label>
-                  <Select value={formData.official_id} onValueChange={(value) => setFormData({...formData, official_id: value})}>
-                    <SelectTrigger>
-                      <SelectValue placeholder="Seleccionar oficial" />
-                    </SelectTrigger>
-                    <SelectContent>
-                      <SelectItem value="unassigned">Sin asignar</SelectItem>
-                      {officials.map((official) => (
-                        <SelectItem key={official.user_id} value={official.user_id}>
-                          {official.first_name} {official.surname_1}
-                        </SelectItem>
-                      ))}
-                    </SelectContent>
-                  </Select>
-                </div>
-                
-                <div className="space-y-2">
-                  <Label htmlFor="route">Ruta Asignada</Label>
-                  <Select value={formData.route_id} onValueChange={(value) => setFormData({...formData, route_id: value})}>
-                    <SelectTrigger>
-                      <SelectValue placeholder="Seleccionar ruta" />
-                    </SelectTrigger>
-                    <SelectContent>
-                      <SelectItem value="none">Sin ruta asignada</SelectItem>
-                      {routes.map((route) => (
-                        <SelectItem key={route.id} value={route.id}>
-                          {route.name} → {route.destination}
-                        </SelectItem>
-                      ))}
-                    </SelectContent>
-                  </Select>
-                </div>
-                
-                <div className="space-y-2">
-                  <Label htmlFor="status">Estado</Label>
-                  <Select value={formData.status} onValueChange={(value) => setFormData({...formData, status: value})}>
-                    <SelectTrigger>
-                      <SelectValue />
-                    </SelectTrigger>
-                    <SelectContent>
-                      <SelectItem value="en_servicio">En Servicio</SelectItem>
-                      <SelectItem value="disponible">Disponible</SelectItem>
-                      <SelectItem value="mantenimiento">Mantenimiento</SelectItem>
-                      <SelectItem value="fuera_de_servicio">Fuera de Servicio</SelectItem>
-                    </SelectContent>
-                  </Select>
-                </div>
+
+                {editingBus && (
+                  <>
+                    <div className="space-y-2">
+                      <Label htmlFor="driver">Conductor (Gestión)</Label>
+                      <Select value={formData.driver_id} onValueChange={(value) => setFormData({...formData, driver_id: value})}>
+                        <SelectTrigger>
+                          <SelectValue placeholder="Seleccionar conductor" />
+                        </SelectTrigger>
+                        <SelectContent>
+                          <SelectItem value="unassigned">Sin asignar</SelectItem>
+                          {drivers.map((driver) => (
+                            <SelectItem key={driver.user_id} value={driver.user_id}>
+                              {driver.first_name} {driver.surname_1}
+                            </SelectItem>
+                          ))}
+                        </SelectContent>
+                      </Select>
+                    </div>
+                    
+                    <div className="space-y-2">
+                      <Label htmlFor="official">Oficial (Gestión)</Label>
+                      <Select value={formData.official_id} onValueChange={(value) => setFormData({...formData, official_id: value})}>
+                        <SelectTrigger>
+                          <SelectValue placeholder="Seleccionar oficial" />
+                        </SelectTrigger>
+                        <SelectContent>
+                          <SelectItem value="unassigned">Sin asignar</SelectItem>
+                          {officials.map((official) => (
+                            <SelectItem key={official.user_id} value={official.user_id}>
+                              {official.first_name} {official.surname_1}
+                            </SelectItem>
+                          ))}
+                        </SelectContent>
+                      </Select>
+                    </div>
+                    
+                    <div className="space-y-2">
+                      <Label htmlFor="route">Ruta Asignada (Gestión)</Label>
+                      <Select value={formData.route_id} onValueChange={(value) => setFormData({...formData, route_id: value})}>
+                        <SelectTrigger>
+                          <SelectValue placeholder="Seleccionar ruta" />
+                        </SelectTrigger>
+                        <SelectContent>
+                          <SelectItem value="none">Sin ruta asignada</SelectItem>
+                          {routes.map((route) => (
+                            <SelectItem key={route.id} value={route.id}>
+                              {route.name} → {route.destination}
+                            </SelectItem>
+                          ))}
+                        </SelectContent>
+                      </Select>
+                    </div>
+                    
+                    <div className="space-y-2">
+                      <Label htmlFor="status">Estado (Gestión)</Label>
+                      <Select value={formData.status} onValueChange={(value) => setFormData({...formData, status: value})}>
+                        <SelectTrigger>
+                          <SelectValue />
+                        </SelectTrigger>
+                        <SelectContent>
+                          <SelectItem value="disponible">Disponible</SelectItem>
+                          <SelectItem value="en_servicio">En Servicio</SelectItem>
+                          <SelectItem value="en_tour">En Tour</SelectItem>
+                          <SelectItem value="mantenimiento">Mantenimiento</SelectItem>
+                          <SelectItem value="fuera_de_servicio">Fuera de Servicio</SelectItem>
+                        </SelectContent>
+                      </Select>
+                    </div>
+                  </>
+                )}
                 
                 <div className="flex justify-end gap-2">
                   <Button type="button" variant="outline" onClick={() => setIsDialogOpen(false)}>

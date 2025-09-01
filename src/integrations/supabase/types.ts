@@ -853,6 +853,10 @@ export type Database = {
         }
         Returns: boolean
       }
+      reset_daily_bus_assignments: {
+        Args: Record<PropertyKey, never>
+        Returns: undefined
+      }
     }
     Enums: {
       app_role:

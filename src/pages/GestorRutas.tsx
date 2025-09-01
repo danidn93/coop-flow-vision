@@ -66,7 +66,7 @@ const GestorRutas = () => {
     loadBuses();
   }, []);
 
-  const canManageRoutes = userRole && ['administrator', 'manager', 'partner'].includes(userRole.role);
+  const canManageRoutes = userRole && ['administrator', 'manager', 'employee', 'partner'].includes(userRole.role);
 
   const loadRoutes = async () => {
     try {
