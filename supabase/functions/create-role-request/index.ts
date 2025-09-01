@@ -95,14 +95,7 @@ const handler = async (req: Request): Promise<Response> => {
     }
 
     if (!userProfile) {
-      console.error('User profile not found for user:', user.id);
-      return new Response(
-        JSON.stringify({ error: 'Perfil de usuario no encontrado. Contacta al administrador.' }),
-        {
-          status: 404,
-          headers: { 'Content-Type': 'application/json', ...corsHeaders }
-        }
-      );
+      console.warn('User profile not found for user, proceeding with fallback name:', user.id);
     }
 
     // Get all administrators to notify
@@ -157,7 +150,7 @@ const handler = async (req: Request): Promise<Response> => {
       .map(role => roleNames[role as keyof typeof roleNames] || role)
       .join(', ');
 
-    const userName = `${userProfile.first_name} ${userProfile.surname_1}`;
+    const userName = userProfile ? `${userProfile.first_name} ${userProfile.surname_1}` : (user.email ?? 'Usuario');
     
     for (const adminRole of adminRoles) {
       const { error: notificationError } = await supabase
