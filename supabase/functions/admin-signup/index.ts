@@ -149,13 +149,93 @@ const handler = async (req: Request): Promise<Response> => {
 
     const existingUsers = await emailCheckResponse.json();
     if (existingUsers.users && existingUsers.users.length > 0) {
-      console.log('User already exists with this email');
+      const existingUser = existingUsers.users[0];
+      console.log('Email exists. Ensuring profile and role for user:', existingUser.id);
+
+      // Ensure profile exists for this auth user
+      const { data: profileByUser, error: profileByUserError } = await supabaseAdmin
+        .from('profiles')
+        .select('id')
+        .eq('user_id', existingUser.id)
+        .maybeSingle();
+
+      if (profileByUserError) {
+        console.error('Error checking profile by user_id:', profileByUserError);
+        return new Response(
+          JSON.stringify({ error: 'Error verificando el perfil existente' }),
+          {
+            status: 500,
+            headers: { 'Content-Type': 'application/json', ...corsHeaders }
+          }
+        );
+      }
+
+      if (!profileByUser) {
+        console.log('No profile found for existing user. Creating profile...');
+        const { error: insertProfileError } = await supabaseAdmin
+          .from('profiles')
+          .insert({
+            user_id: existingUser.id,
+            first_name: signupData.first_name,
+            middle_name: signupData.middle_name,
+            surname_1: signupData.surname_1,
+            surname_2: signupData.surname_2,
+            id_number: signupData.id_number,
+            phone: signupData.phone,
+            address: signupData.address
+          });
+
+        if (insertProfileError) {
+          console.error('Error creating profile for existing user:', insertProfileError);
+          return new Response(
+            JSON.stringify({ error: 'Error creando el perfil del usuario existente' }),
+            {
+              status: 500,
+              headers: { 'Content-Type': 'application/json', ...corsHeaders }
+            }
+          );
+        }
+      }
+
+      // Ensure role exists/updated
+      const { data: existingRole, error: roleFetchError } = await supabaseAdmin
+        .from('user_roles')
+        .select('id, role')
+        .eq('user_id', existingUser.id)
+        .maybeSingle();
+
+      if (roleFetchError) {
+        console.error('Error checking existing role:', roleFetchError);
+      }
+
+      if (existingRole) {
+        if (existingRole.role !== signupData.role) {
+          console.log('Updating role for existing user');
+          const { error: roleUpdateError } = await supabaseAdmin
+            .from('user_roles')
+            .update({ role: signupData.role })
+            .eq('id', existingRole.id);
+          if (roleUpdateError) {
+            console.error('Role update error:', roleUpdateError);
+          }
+        }
+      } else {
+        console.log('Inserting role for existing user');
+        const { error: roleInsertError } = await supabaseAdmin
+          .from('user_roles')
+          .insert({ user_id: existingUser.id, role: signupData.role });
+        if (roleInsertError) {
+          console.error('Role insert error:', roleInsertError);
+        }
+      }
+
       return new Response(
-        JSON.stringify({ 
-          error: 'Ya existe un usuario con este email' 
+        JSON.stringify({
+          message: 'Usuario existente actualizado',
+          user: { id: existingUser.id, email: existingUser.email }
         }),
         {
-          status: 400,
+          status: 200,
           headers: { 'Content-Type': 'application/json', ...corsHeaders }
         }
       );
