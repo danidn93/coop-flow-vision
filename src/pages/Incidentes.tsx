@@ -103,9 +103,12 @@ const Incidentes = () => {
   const [uploading, setUploading] = useState(false);
   const fileInputRef = useRef<HTMLInputElement>(null);
 
-  const canCreateIncident = userRole?.role === 'driver' || 
+  const canCreateIncident = user && (
+                           userRole?.role === 'client' ||
+                           userRole?.role === 'driver' || 
                            userRole?.role === 'official' || 
-                           userRole?.role === 'administrator';
+                           userRole?.role === 'administrator'
+                         );
 
   const canModerate = userRole?.role === 'administrator' || 
                      userRole?.role === 'manager' || 

@@ -37,7 +37,7 @@ interface UserTicket {
   id: string;
   user_id: string;
   route_id: string;
-  ticket_image_url: string;
+  ticket_number: string;
   points_earned: number;
   validated: boolean;
   created_at: string;
@@ -58,7 +58,7 @@ const Recompensas = () => {
   const [loading, setLoading] = useState(true);
   const [isRewardDialogOpen, setIsRewardDialogOpen] = useState(false);
   const [isTicketDialogOpen, setIsTicketDialogOpen] = useState(false);
-  const [ticketFile, setTicketFile] = useState<File | null>(null);
+  const [ticketNumber, setTicketNumber] = useState('');
   const [rewardImageFile, setRewardImageFile] = useState<File | null>(null);
   const [selectedRoute, setSelectedRoute] = useState('');
   
@@ -138,25 +138,22 @@ const Recompensas = () => {
     }
   };
 
-  const uploadTicketImage = async (file: File) => {
+  const validateTicketNumber = async (ticketNumber: string) => {
     if (!user) throw new Error('Usuario no autenticado');
 
     try {
-      const fileExt = file.name.split('.').pop();
-      const fileName = `${user.id}/${Date.now()}.${fileExt}`;
-      const filePath = `user-tickets/${fileName}`;
+      // Check if ticket number already exists
+      const { data: existingTicket, error } = await supabase
+        .from('user_tickets')
+        .select('id')
+        .eq('ticket_number', ticketNumber)
+        .single();
 
-      const { error: uploadError } = await supabase.storage
-        .from('user-tickets')
-        .upload(filePath, file);
+      if (error && error.code !== 'PGRST116') {
+        throw error;
+      }
 
-      if (uploadError) throw uploadError;
-
-      const { data: { publicUrl } } = supabase.storage
-        .from('user-tickets')
-        .getPublicUrl(filePath);
-
-      return publicUrl;
+      return !existingTicket; // Return true if ticket doesn't exist
     } catch (error: any) {
       throw error;
     }
@@ -185,9 +182,30 @@ const Recompensas = () => {
   };
 
   const handleUploadTicket = async () => {
-    if (!user || !ticketFile || !selectedRoute) return;
+    if (!user || !ticketNumber || !selectedRoute) return;
 
     try {
+      // Validate ticket number is not empty and has minimum length
+      if (ticketNumber.trim().length < 3) {
+        toast({
+          title: "Error",
+          description: "El número de boleto debe tener al menos 3 caracteres",
+          variant: "destructive",
+        });
+        return;
+      }
+
+      // Check if ticket number already exists
+      const isValid = await validateTicketNumber(ticketNumber.trim());
+      if (!isValid) {
+        toast({
+          title: "Boleto duplicado",
+          description: "Este número de boleto ya ha sido registrado",
+          variant: "destructive",
+        });
+        return;
+      }
+
       // Check daily limit
       const today = new Date().toISOString().split('T')[0];
       const { data: config } = await supabase
@@ -201,14 +219,11 @@ const Recompensas = () => {
       if (userPoints?.last_ticket_date === today && userPoints.tickets_today >= maxTickets) {
         toast({
           title: "Límite alcanzado",
-          description: `Solo puedes subir ${maxTickets} boletos por día`,
+          description: `Solo puedes registrar ${maxTickets} boletos por día`,
           variant: "destructive",
         });
         return;
       }
-
-      // Upload image
-      const imageUrl = await uploadTicketImage(ticketFile);
 
       // Create ticket record
       const { error: ticketError } = await supabase
@@ -216,7 +231,7 @@ const Recompensas = () => {
         .insert({
           user_id: user.id,
           route_id: selectedRoute,
-          ticket_image_url: imageUrl,
+          ticket_number: ticketNumber.trim(),
           points_earned: pointsPerTicket
         });
 
@@ -238,17 +253,17 @@ const Recompensas = () => {
 
       toast({
         title: "Éxito",
-        description: `Boleto subido. Has ganado ${pointsPerTicket} puntos!`,
+        description: `Boleto registrado. Has ganado ${pointsPerTicket} puntos!`,
       });
 
       setIsTicketDialogOpen(false);
-      setTicketFile(null);
+      setTicketNumber('');
       setSelectedRoute('');
       loadData();
     } catch (error: any) {
       toast({
         title: "Error",
-        description: "No se pudo subir el boleto",
+        description: "No se pudo registrar el boleto",
         variant: "destructive",
       });
     }
@@ -347,7 +362,7 @@ const Recompensas = () => {
         <div>
           <h1 className="text-3xl font-bold tracking-tight">Sistema de Recompensas</h1>
           <p className="text-muted-foreground">
-            Acumula puntos subiendo boletos y canjea recompensas
+            Acumula puntos registrando boletos y canjea recompensas
           </p>
         </div>
         <div className="flex gap-2">
@@ -355,13 +370,13 @@ const Recompensas = () => {
             <Dialog open={isTicketDialogOpen} onOpenChange={setIsTicketDialogOpen}>
               <DialogTrigger asChild>
                 <Button>
-                  <Camera className="mr-2 h-4 w-4" />
-                  Subir Boleto
+                  <Ticket className="mr-2 h-4 w-4" />
+                  Registrar Boleto
                 </Button>
               </DialogTrigger>
               <DialogContent>
                 <DialogHeader>
-                  <DialogTitle>Subir Boleto</DialogTitle>
+                  <DialogTitle>Registrar Boleto</DialogTitle>
                 </DialogHeader>
                 <div className="space-y-4">
                   <div>
@@ -380,20 +395,24 @@ const Recompensas = () => {
                     </select>
                   </div>
                   <div>
-                    <Label>Foto del Boleto</Label>
-                    <input
-                      type="file"
-                      accept="image/*"
-                      onChange={(e) => setTicketFile(e.target.files?.[0] || null)}
-                      className="w-full p-2 border rounded"
+                    <Label>Número del Boleto</Label>
+                    <Input
+                      type="text"
+                      value={ticketNumber}
+                      onChange={(e) => setTicketNumber(e.target.value)}
+                      placeholder="Ingresa el número del boleto"
+                      className="w-full"
                     />
+                    <p className="text-xs text-muted-foreground mt-1">
+                      Cada boleto debe tener un número único
+                    </p>
                   </div>
                   <Button 
                     onClick={handleUploadTicket}
-                    disabled={!ticketFile || !selectedRoute}
+                    disabled={!ticketNumber.trim() || !selectedRoute}
                     className="w-full"
                   >
-                    Subir Boleto
+                    Registrar Boleto
                   </Button>
                 </div>
               </DialogContent>
@@ -555,18 +574,17 @@ const Recompensas = () => {
                   {userTickets.map((ticket) => (
                     <div key={ticket.id} className="flex items-center justify-between p-3 border rounded-lg">
                       <div className="flex items-center space-x-3">
-                        <div className="w-12 h-12 bg-muted rounded-lg overflow-hidden">
-                          <img 
-                            src={ticket.ticket_image_url} 
-                            alt="Boleto"
-                            className="w-full h-full object-cover"
-                          />
+                        <div className="w-12 h-12 bg-muted rounded-lg flex items-center justify-center">
+                          <Ticket className="h-6 w-6 text-muted-foreground" />
                         </div>
                         <div>
                           <p className="font-medium">
                             {ticket.routes?.origin} - {ticket.routes?.destination}
                           </p>
                           <p className="text-sm text-muted-foreground">
+                            Boleto #{ticket.ticket_number}
+                          </p>
+                          <p className="text-xs text-muted-foreground">
                             {new Date(ticket.created_at).toLocaleDateString()}
                           </p>
                         </div>

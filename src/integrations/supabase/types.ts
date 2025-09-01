@@ -741,7 +741,7 @@ export type Database = {
           id: string
           points_earned: number
           route_id: string
-          ticket_image_url: string
+          ticket_number: string
           user_id: string
           validated: boolean | null
           validated_at: string | null
@@ -752,7 +752,7 @@ export type Database = {
           id?: string
           points_earned?: number
           route_id: string
-          ticket_image_url: string
+          ticket_number?: string
           user_id: string
           validated?: boolean | null
           validated_at?: string | null
@@ -763,7 +763,7 @@ export type Database = {
           id?: string
           points_earned?: number
           route_id?: string
-          ticket_image_url?: string
+          ticket_number?: string
           user_id?: string
           validated?: boolean | null
           validated_at?: string | null
