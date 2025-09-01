@@ -1,7 +1,7 @@
 import { NavLink, useLocation } from "react-router-dom";
 import { 
   Home, Users, MapPin, Settings, FileText, Bus, 
-  Calendar, Clock, LogOut, UserCheck, MessageSquare, MessageCircle, AlertTriangle, Gift, Building, Palette, UserPlus
+  Calendar, Clock, LogOut, UserCheck, MessageSquare, MessageCircle, AlertTriangle, Gift, Building, Palette, UserPlus, Archive
 } from "lucide-react";
 import {
   Sidebar,
@@ -27,10 +27,12 @@ import { useAuth } from "@/hooks/useAuth";
   { title: "Buses", url: "/buses", icon: Bus },
   { title: "Rutas", url: "/rutas", icon: MapPin },
   { title: "Frecuencias", url: "/gestor-frecuencias", icon: Clock },
+  { title: "Terminales", url: "/gestor-terminales", icon: Building },
   { title: "Recompensas", url: "/recompensas", icon: Gift },
   { title: "Chat Soporte", url: "/chat-soporte", icon: MessageSquare },
   { title: "Incidentes", url: "/incidentes", icon: AlertTriangle },
   { title: "Gestión Incidentes", url: "/gestion-incidentes", icon: AlertTriangle },
+  { title: "Auditoría", url: "/auditoria", icon: Archive },
   { title: "Reportes", url: "/reportes", icon: FileText },
   { title: "Configuración", url: "/configuracion", icon: Settings },
   { title: "Config. Cooperativa", url: "/configuracion-cooperativa", icon: Building },
@@ -71,6 +73,8 @@ export function AppSidebar() {
     if (item.url === '/solicitudes-roles') return userRole?.role === 'administrator';
     if (item.url === '/gestion-incidentes') return ['administrator', 'manager', 'president', 'employee'].includes(userRole?.role || '');
     if (item.url === '/configuracion-cooperativa') return userRole?.role === 'administrator';
+    if (item.url === '/gestor-terminales') return ['administrator', 'manager'].includes(userRole?.role || '');
+    if (item.url === '/auditoria') return ['administrator', 'manager'].includes(userRole?.role || '');
     return true;
   });
   return (

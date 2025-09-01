@@ -13,6 +13,7 @@ import GestorUsuarios from "./pages/GestorUsuarios";
 import GestorBuses from "./pages/GestorBuses";
 import GestorRutas from "./pages/GestorRutas";
 import GestorFrecuencias from "./pages/GestorFrecuencias";
+import GestorTerminales from "./pages/GestorTerminales";
 import Recompensas from "./pages/Recompensas";
 import ConfiguracionCooperativa from "./pages/ConfiguracionCooperativa";
 import ConfiguracionTema from "./pages/ConfiguracionTema";
@@ -24,6 +25,7 @@ import Reportes from "./pages/Reportes";
 import Configuracion from "./pages/Configuracion";
 import NotFound from "./pages/NotFound";
 import ProtectedRoute from "./components/ProtectedRoute";
+import AuditLog from "./components/AuditLog";
 
 const queryClient = new QueryClient();
 
@@ -110,6 +112,20 @@ const App = () => (
               <ProtectedRoute allowedRoles={['administrator', 'manager', 'employee', 'president']}>
                 <DashboardLayout>
                   <GestorFrecuencias />
+                </DashboardLayout>
+              </ProtectedRoute>
+            } />
+            <Route path="/gestor-terminales" element={
+              <ProtectedRoute allowedRoles={['administrator', 'manager']}>
+                <DashboardLayout>
+                  <GestorTerminales />
+                </DashboardLayout>
+              </ProtectedRoute>
+            } />
+            <Route path="/auditoria" element={
+              <ProtectedRoute allowedRoles={['administrator', 'manager']}>
+                <DashboardLayout>
+                  <AuditLog />
                 </DashboardLayout>
               </ProtectedRoute>
             } />

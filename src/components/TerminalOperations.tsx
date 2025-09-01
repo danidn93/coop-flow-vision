@@ -4,6 +4,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Badge } from "@/components/ui/badge";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { supabase } from '@/integrations/supabase/client';
 import { useToast } from '@/hooks/use-toast';
 import { useAuth } from '@/hooks/useAuth';
@@ -18,6 +19,19 @@ interface TerminalOperation {
   recorded_by: string;
   recorded_at: string;
   created_at: string;
+  terminal_id?: string;
+  terminals?: {
+    name: string;
+    location: string;
+  };
+}
+
+interface Terminal {
+  id: string;
+  name: string;
+  location: string;
+  terminal_type: string;
+  is_active: boolean;
 }
 
 interface RouteFrequency {
@@ -51,7 +65,10 @@ const TerminalOperations: React.FC<TerminalOperationsProps> = ({ frequency, onUp
   const { toast } = useToast();
   const { user } = useAuth();
   const [operations, setOperations] = useState<TerminalOperation[]>([]);
+  const [terminals, setTerminals] = useState<Terminal[]>([]);
+  const [userAssignedTerminals, setUserAssignedTerminals] = useState<Terminal[]>([]);
   const [isDialogOpen, setIsDialogOpen] = useState(false);
+  const [selectedTerminalId, setSelectedTerminalId] = useState<string>('');
   const [terminalName, setTerminalName] = useState('');
   const [passengersCount, setPassengersCount] = useState<number>(0);
   const [revenue, setRevenue] = useState<number>(0);
@@ -59,15 +76,26 @@ const TerminalOperations: React.FC<TerminalOperationsProps> = ({ frequency, onUp
 
   useEffect(() => {
     if (frequency.id) {
-      loadTerminalOperations();
+      loadData();
     }
   }, [frequency.id]);
+
+  const loadData = async () => {
+    await Promise.all([
+      loadTerminalOperations(),
+      loadTerminals(),
+      loadUserAssignedTerminals()
+    ]);
+  };
 
   const loadTerminalOperations = async () => {
     try {
       const { data, error } = await supabase
         .from('terminal_operations')
-        .select('*')
+        .select(`
+          *,
+          terminals(name, location)
+        `)
         .eq('frequency_id', frequency.id)
         .order('terminal_order', { ascending: true });
 
@@ -78,25 +106,81 @@ const TerminalOperations: React.FC<TerminalOperationsProps> = ({ frequency, onUp
     }
   };
 
+  const loadTerminals = async () => {
+    try {
+      const { data, error } = await supabase
+        .from('terminals')
+        .select('*')
+        .eq('is_active', true)
+        .order('name');
+
+      if (error) throw error;
+      setTerminals(data || []);
+    } catch (error: any) {
+      console.error('Error loading terminals:', error);
+    }
+  };
+
+  const loadUserAssignedTerminals = async () => {
+    if (!user) return;
+    
+    try {
+      const { data, error } = await supabase
+        .from('terminal_assignments')
+        .select(`
+          terminal_id,
+          terminals(*)
+        `)
+        .eq('employee_id', user.id)
+        .eq('is_active', true);
+
+      if (error) throw error;
+      
+      const assignedTerminals = data?.map(assignment => assignment.terminals).filter(Boolean) || [];
+      setUserAssignedTerminals(assignedTerminals);
+    } catch (error: any) {
+      console.error('Error loading user assigned terminals:', error);
+    }
+  };
+
   const addTerminalOperation = async () => {
-    if (!terminalName.trim() || !user) return;
+    if ((!selectedTerminalId && !terminalName.trim()) || !user) return;
     
     setLoading(true);
     try {
       const nextOrder = Math.max(...operations.map(op => op.terminal_order), 0) + 1;
       
-      const { error } = await supabase
+      const insertData = {
+        frequency_id: frequency.id,
+        terminal_name: selectedTerminalId ? 
+          terminals.find(t => t.id === selectedTerminalId)?.name || terminalName.trim() : 
+          terminalName.trim(),
+        terminal_order: nextOrder,
+        passengers_count: passengersCount,
+        revenue: revenue,
+        recorded_by: user.id,
+        ...(selectedTerminalId && { terminal_id: selectedTerminalId })
+      };
+
+      const { data, error } = await supabase
         .from('terminal_operations')
-        .insert({
-          frequency_id: frequency.id,
-          terminal_name: terminalName.trim(),
-          terminal_order: nextOrder,
-          passengers_count: passengersCount,
-          revenue: revenue,
-          recorded_by: user.id
-        });
+        .insert(insertData)
+        .select()
+        .single();
 
       if (error) throw error;
+
+      // Log audit trail
+      await supabase.rpc('create_audit_log', {
+        p_action: 'CREATE',
+        p_table_name: 'terminal_operations',
+        p_record_id: data.id,
+        p_new_values: insertData,
+        p_metadata: {
+          frequency_id: frequency.id,
+          route_id: frequency.route_id
+        }
+      });
 
       toast({
         title: "Éxito",
@@ -104,6 +188,7 @@ const TerminalOperations: React.FC<TerminalOperationsProps> = ({ frequency, onUp
       });
 
       setIsDialogOpen(false);
+      setSelectedTerminalId('');
       setTerminalName('');
       setPassengersCount(0);
       setRevenue(0);
@@ -131,6 +216,17 @@ const TerminalOperations: React.FC<TerminalOperationsProps> = ({ frequency, onUp
         .eq('id', operationId);
 
       if (error) throw error;
+
+      // Log audit trail
+      await supabase.rpc('create_audit_log', {
+        p_action: 'DELETE',
+        p_table_name: 'terminal_operations',
+        p_record_id: operationId,
+        p_metadata: {
+          frequency_id: frequency.id,
+          route_id: frequency.route_id
+        }
+      });
 
       toast({
         title: "Éxito",
@@ -184,7 +280,14 @@ const TerminalOperations: React.FC<TerminalOperationsProps> = ({ frequency, onUp
                       Terminal {operation.terminal_order}
                     </Badge>
                     <div className="flex flex-col">
-                      <span className="font-medium">{operation.terminal_name}</span>
+                      <span className="font-medium">
+                        {operation.terminals?.name || operation.terminal_name}
+                      </span>
+                      {operation.terminals?.location && (
+                        <span className="text-xs text-muted-foreground">
+                          {operation.terminals.location}
+                        </span>
+                      )}
                       <div className="flex items-center gap-4 text-sm text-muted-foreground">
                         <div className="flex items-center gap-1">
                           <Users className="h-3 w-3" />
@@ -255,12 +358,32 @@ const TerminalOperations: React.FC<TerminalOperationsProps> = ({ frequency, onUp
             </div>
             
             <div>
-              <label className="block text-sm font-medium mb-2">Nombre de la Terminal</label>
-              <Input
-                value={terminalName}
-                onChange={(e) => setTerminalName(e.target.value)}
-                placeholder="Ej: Terminal Central, Estación Norte, etc."
-              />
+              <label className="block text-sm font-medium mb-2">Terminal</label>
+              {userAssignedTerminals.length > 0 ? (
+                <Select value={selectedTerminalId} onValueChange={(value) => {
+                  setSelectedTerminalId(value);
+                  if (value) {
+                    setTerminalName('');
+                  }
+                }}>
+                  <SelectTrigger>
+                    <SelectValue placeholder="Seleccionar terminal asignada" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    {userAssignedTerminals.map((terminal) => (
+                      <SelectItem key={terminal.id} value={terminal.id}>
+                        {terminal.name} - {terminal.location}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              ) : (
+                <Input
+                  value={terminalName}
+                  onChange={(e) => setTerminalName(e.target.value)}
+                  placeholder="Ej: Terminal Central, Estación Norte, etc."
+                />
+              )}
             </div>
             
             <div className="grid gap-4 md:grid-cols-2">
@@ -298,7 +421,7 @@ const TerminalOperations: React.FC<TerminalOperationsProps> = ({ frequency, onUp
               </Button>
               <Button 
                 onClick={addTerminalOperation}
-                disabled={!terminalName.trim() || loading}
+                disabled={(!selectedTerminalId && !terminalName.trim()) || loading}
               >
                 {loading ? 'Guardando...' : 'Agregar Operación'}
               </Button>

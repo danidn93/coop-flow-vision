@@ -14,6 +14,42 @@ export type Database = {
   }
   public: {
     Tables: {
+      audit_log: {
+        Row: {
+          action: string
+          created_at: string
+          id: string
+          metadata: Json | null
+          new_values: Json | null
+          old_values: Json | null
+          record_id: string | null
+          table_name: string
+          user_id: string
+        }
+        Insert: {
+          action: string
+          created_at?: string
+          id?: string
+          metadata?: Json | null
+          new_values?: Json | null
+          old_values?: Json | null
+          record_id?: string | null
+          table_name: string
+          user_id: string
+        }
+        Update: {
+          action?: string
+          created_at?: string
+          id?: string
+          metadata?: Json | null
+          new_values?: Json | null
+          old_values?: Json | null
+          record_id?: string | null
+          table_name?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
       bus_chats: {
         Row: {
           bus_id: string
@@ -655,6 +691,47 @@ export type Database = {
         }
         Relationships: []
       }
+      terminal_assignments: {
+        Row: {
+          assigned_at: string
+          assigned_by: string
+          created_at: string
+          employee_id: string
+          id: string
+          is_active: boolean
+          terminal_id: string
+          updated_at: string
+        }
+        Insert: {
+          assigned_at?: string
+          assigned_by: string
+          created_at?: string
+          employee_id: string
+          id?: string
+          is_active?: boolean
+          terminal_id: string
+          updated_at?: string
+        }
+        Update: {
+          assigned_at?: string
+          assigned_by?: string
+          created_at?: string
+          employee_id?: string
+          id?: string
+          is_active?: boolean
+          terminal_id?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "terminal_assignments_terminal_id_fkey"
+            columns: ["terminal_id"]
+            isOneToOne: false
+            referencedRelation: "terminals"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       terminal_operations: {
         Row: {
           created_at: string
@@ -665,6 +742,7 @@ export type Database = {
           recorded_by: string
           revenue: number
           route_frequency_id: string | null
+          terminal_id: string | null
           terminal_name: string
           terminal_order: number
           updated_at: string
@@ -678,6 +756,7 @@ export type Database = {
           recorded_by: string
           revenue?: number
           route_frequency_id?: string | null
+          terminal_id?: string | null
           terminal_name: string
           terminal_order?: number
           updated_at?: string
@@ -691,6 +770,7 @@ export type Database = {
           recorded_by?: string
           revenue?: number
           route_frequency_id?: string | null
+          terminal_id?: string | null
           terminal_name?: string
           terminal_order?: number
           updated_at?: string
@@ -703,7 +783,44 @@ export type Database = {
             referencedRelation: "route_frequencies"
             referencedColumns: ["id"]
           },
+          {
+            foreignKeyName: "terminal_operations_terminal_id_fkey"
+            columns: ["terminal_id"]
+            isOneToOne: false
+            referencedRelation: "terminals"
+            referencedColumns: ["id"]
+          },
         ]
+      }
+      terminals: {
+        Row: {
+          created_at: string
+          id: string
+          is_active: boolean
+          location: string
+          name: string
+          terminal_type: string
+          updated_at: string
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          is_active?: boolean
+          location: string
+          name: string
+          terminal_type?: string
+          updated_at?: string
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          is_active?: boolean
+          location?: string
+          name?: string
+          terminal_type?: string
+          updated_at?: string
+        }
+        Relationships: []
       }
       user_points: {
         Row: {
@@ -837,6 +954,17 @@ export type Database = {
       [_ in never]: never
     }
     Functions: {
+      create_audit_log: {
+        Args: {
+          p_action: string
+          p_metadata?: Json
+          p_new_values?: Json
+          p_old_values?: Json
+          p_record_id?: string
+          p_table_name: string
+        }
+        Returns: undefined
+      }
       create_notification: {
         Args: {
           p_message: string
