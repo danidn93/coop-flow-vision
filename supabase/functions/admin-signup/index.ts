@@ -25,6 +25,17 @@ const handler = async (req: Request): Promise<Response> => {
     return new Response(null, { headers: corsHeaders });
   }
 
+  // Only accept POST requests
+  if (req.method !== 'POST') {
+    return new Response(
+      JSON.stringify({ error: 'Método no permitido' }),
+      {
+        status: 405,
+        headers: { 'Content-Type': 'application/json', ...corsHeaders }
+      }
+    );
+  }
+
   try {
     // Create admin client with service role key
     const supabaseAdmin = createClient(
@@ -38,7 +49,45 @@ const handler = async (req: Request): Promise<Response> => {
       }
     );
 
-    const signupData: SignupRequest = await req.json();
+    // Validate request body
+    const text = await req.text();
+    if (!text || text.trim() === '') {
+      return new Response(
+        JSON.stringify({ error: 'Body del request vacío' }),
+        {
+          status: 400,
+          headers: { 'Content-Type': 'application/json', ...corsHeaders }
+        }
+      );
+    }
+
+    let signupData: SignupRequest;
+    try {
+      signupData = JSON.parse(text);
+    } catch (parseError) {
+      console.error('JSON parse error:', parseError);
+      return new Response(
+        JSON.stringify({ error: 'JSON inválido' }),
+        {
+          status: 400,
+          headers: { 'Content-Type': 'application/json', ...corsHeaders }
+        }
+      );
+    }
+
+    // Validate required fields
+    const requiredFields = ['email', 'password', 'first_name', 'surname_1', 'id_number', 'phone', 'address', 'role'];
+    const missingFields = requiredFields.filter(field => !signupData[field as keyof SignupRequest]);
+    
+    if (missingFields.length > 0) {
+      return new Response(
+        JSON.stringify({ error: `Campos faltantes: ${missingFields.join(', ')}` }),
+        {
+          status: 400,
+          headers: { 'Content-Type': 'application/json', ...corsHeaders }
+        }
+      );
+    }
 
     // Check if id_number already exists
     const { data: existingProfile } = await supabaseAdmin
