@@ -60,8 +60,7 @@ const GestorBuses = () => {
     status: 'disponible',
     owner_id: '',
     driver_id: '',
-    official_id: '',
-    route_id: ''
+    official_id: ''
   });
 
   useEffect(() => {
@@ -77,8 +76,7 @@ const GestorBuses = () => {
       const { data, error } = await supabase
         .from('buses')
         .select(`
-          id, plate, alias, capacity, status, owner_id, driver_id, official_id, route_id, created_at,
-          routes(name, destination)
+          id, plate, alias, capacity, status, owner_id, driver_id, official_id, created_at
         `)
         .order('created_at', { ascending: false });
 
@@ -153,8 +151,7 @@ const GestorBuses = () => {
       ...formData,
       owner_id: formData.owner_id || user?.id,
       driver_id: formData.driver_id === 'unassigned' ? null : formData.driver_id || null,
-      official_id: formData.official_id === 'unassigned' ? null : formData.official_id || null,
-      route_id: formData.route_id === 'none' ? null : formData.route_id || null
+      official_id: formData.official_id === 'unassigned' ? null : formData.official_id || null
     };
     
     try {
@@ -205,8 +202,7 @@ const GestorBuses = () => {
       status: bus.status,
       owner_id: bus.owner_id,
       driver_id: bus.driver_id || 'unassigned',
-      official_id: bus.official_id || 'unassigned',
-      route_id: bus.route_id || 'none'
+      official_id: bus.official_id || 'unassigned'
     });
     setIsDialogOpen(true);
   };
@@ -245,8 +241,7 @@ const GestorBuses = () => {
       status: 'disponible',
       owner_id: '',
       driver_id: 'unassigned',
-      official_id: 'unassigned',
-      route_id: 'none'
+      official_id: 'unassigned'
     });
   };
 
@@ -387,22 +382,6 @@ const GestorBuses = () => {
                       </Select>
                     </div>
                     
-                    <div className="space-y-2">
-                      <Label htmlFor="route">Ruta Asignada (Gestión)</Label>
-                      <Select value={formData.route_id} onValueChange={(value) => setFormData({...formData, route_id: value})}>
-                        <SelectTrigger>
-                          <SelectValue placeholder="Seleccionar ruta" />
-                        </SelectTrigger>
-                        <SelectContent>
-                          <SelectItem value="none">Sin ruta asignada</SelectItem>
-                          {routes.map((route) => (
-                            <SelectItem key={route.id} value={route.id}>
-                              {route.name} → {route.destination}
-                            </SelectItem>
-                          ))}
-                        </SelectContent>
-                      </Select>
-                    </div>
                     
                     <div className="space-y-2">
                       <Label htmlFor="status">Estado (Gestión)</Label>

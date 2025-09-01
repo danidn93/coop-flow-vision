@@ -40,6 +40,7 @@ const GestorFrecuencias = () => {
   const [buses, setBuses] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
 const [selectedRoute, setSelectedRoute] = useState<string>('');
+const [selectedDate, setSelectedDate] = useState<string>(new Date().toISOString().split('T')[0]);
 const [isAssignDialogOpen, setIsAssignDialogOpen] = useState(false);
 const [selectedFrequency, setSelectedFrequency] = useState<RouteFrequency | null>(null);
 const [selectedBus, setSelectedBus] = useState<string>('');
@@ -54,12 +55,12 @@ const [frequencyMinutes, setFrequencyMinutes] = useState<number>(15);
   }, []);
 
   useEffect(() => {
-    if (selectedRoute) {
-      loadFrequencies(selectedRoute);
+    if (selectedRoute && selectedDate) {
+      loadFrequencies(selectedRoute, selectedDate);
     } else {
       setFrequencies([]);
     }
-  }, [selectedRoute]);
+  }, [selectedRoute, selectedDate]);
 
   const loadData = async () => {
     try {
@@ -94,7 +95,7 @@ const [frequencyMinutes, setFrequencyMinutes] = useState<number>(15);
     }
   };
 
-  const loadFrequencies = async (routeId: string) => {
+  const loadFrequencies = async (routeId: string, date: string) => {
     try {
       const { data, error } = await supabase
         .from('route_frequencies')
@@ -104,6 +105,7 @@ const [frequencyMinutes, setFrequencyMinutes] = useState<number>(15);
           buses(id, alias, plate)
         `)
         .eq('route_id', routeId)
+        .eq('frequency_date', date)
         .neq('status', 'cancelled')
         .order('frequency_number');
 
@@ -119,17 +121,18 @@ const [frequencyMinutes, setFrequencyMinutes] = useState<number>(15);
   };
 
   const generateFrequencies = async () => {
-    if (!selectedRoute) return;
+    if (!selectedRoute || !selectedDate) return;
     try {
       const { error } = await supabase.rpc('generate_route_frequencies', {
         p_route_id: selectedRoute,
         p_frequency_minutes: frequencyMinutes,
         p_start_time: `${startTime}:00`,
         p_end_time: `${endTime}:00`,
+        p_date: selectedDate
       });
       if (error) throw error;
       toast({ title: 'Frecuencias generadas', description: 'Se actualizaron las frecuencias de la ruta.' });
-      loadFrequencies(selectedRoute);
+      loadFrequencies(selectedRoute, selectedDate);
     } catch (error: any) {
       toast({ title: 'Error', description: 'No se pudieron generar las frecuencias', variant: 'destructive' });
     }
@@ -155,8 +158,8 @@ const [frequencyMinutes, setFrequencyMinutes] = useState<number>(15);
       setSelectedFrequency(null);
       setSelectedBus('');
       
-      if (selectedRoute) {
-        loadFrequencies(selectedRoute);
+      if (selectedRoute && selectedDate) {
+        loadFrequencies(selectedRoute, selectedDate);
       }
     } catch (error: any) {
       toast({
@@ -181,8 +184,8 @@ const [frequencyMinutes, setFrequencyMinutes] = useState<number>(15);
         description: "Bus desasignado de la frecuencia",
       });
 
-      if (selectedRoute) {
-        loadFrequencies(selectedRoute);
+      if (selectedRoute && selectedDate) {
+        loadFrequencies(selectedRoute, selectedDate);
       }
     } catch (error: any) {
       toast({
@@ -284,8 +287,8 @@ const [frequencyMinutes, setFrequencyMinutes] = useState<number>(15);
         description: "Frecuencia cancelada correctamente",
       });
 
-      if (selectedRoute) {
-        loadFrequencies(selectedRoute);
+      if (selectedRoute && selectedDate) {
+        loadFrequencies(selectedRoute, selectedDate);
       }
     } catch (error: any) {
       toast({
@@ -324,21 +327,36 @@ const [frequencyMinutes, setFrequencyMinutes] = useState<number>(15);
 
       <Card>
         <CardHeader>
-          <CardTitle>Seleccionar Ruta</CardTitle>
+          <CardTitle>Seleccionar Ruta y Fecha</CardTitle>
         </CardHeader>
         <CardContent>
-          <Select value={selectedRoute} onValueChange={setSelectedRoute}>
-            <SelectTrigger className="w-full">
-              <SelectValue placeholder="Selecciona una ruta para ver sus frecuencias" />
-            </SelectTrigger>
-            <SelectContent>
-              {routes.map(route => (
-                <SelectItem key={route.id} value={route.id}>
-                  {route.origin} - {route.destination}
-                </SelectItem>
-              ))}
-            </SelectContent>
-          </Select>
+          <div className="grid gap-4 md:grid-cols-2">
+            <div>
+              <label className="block text-sm font-medium mb-2">Ruta</label>
+              <Select value={selectedRoute} onValueChange={setSelectedRoute}>
+                <SelectTrigger className="w-full">
+                  <SelectValue placeholder="Selecciona una ruta para ver sus frecuencias" />
+                </SelectTrigger>
+                <SelectContent>
+                  {routes.map(route => (
+                    <SelectItem key={route.id} value={route.id}>
+                      {route.origin} - {route.destination}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            </div>
+            
+            <div>
+              <label className="block text-sm font-medium mb-2">Fecha</label>
+              <Input 
+                type="date" 
+                value={selectedDate} 
+                onChange={(e) => setSelectedDate(e.target.value)}
+                className="w-full"
+              />
+            </div>
+          </div>
         </CardContent>
       </Card>
 

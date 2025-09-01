@@ -550,6 +550,7 @@ export type Database = {
           assigned_bus_id: string | null
           created_at: string
           departure_time: string
+          frequency_date: string
           frequency_number: number
           id: string
           is_first_turn: boolean | null
@@ -565,6 +566,7 @@ export type Database = {
           assigned_bus_id?: string | null
           created_at?: string
           departure_time: string
+          frequency_date?: string
           frequency_number: number
           id?: string
           is_first_turn?: boolean | null
@@ -580,6 +582,7 @@ export type Database = {
           assigned_bus_id?: string | null
           created_at?: string
           departure_time?: string
+          frequency_date?: string
           frequency_number?: number
           id?: string
           is_first_turn?: boolean | null
@@ -834,12 +837,20 @@ export type Database = {
         Returns: undefined
       }
       generate_route_frequencies: {
-        Args: {
-          p_end_time?: string
-          p_frequency_minutes: number
-          p_route_id: string
-          p_start_time?: string
-        }
+        Args:
+          | {
+              p_date?: string
+              p_end_time?: string
+              p_frequency_minutes: number
+              p_route_id: string
+              p_start_time?: string
+            }
+          | {
+              p_end_time?: string
+              p_frequency_minutes: number
+              p_route_id: string
+              p_start_time?: string
+            }
         Returns: undefined
       }
       get_current_user_role: {
