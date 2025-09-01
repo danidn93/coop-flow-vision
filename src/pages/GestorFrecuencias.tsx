@@ -526,11 +526,11 @@ const GestorFrecuencias = () => {
                                         expandedFrequency === frequency.id ? null : frequency.id
                                       );
                                     }}
-                                    className={!frequency.terminal_operations || frequency.terminal_operations.length === 0 ? 'bg-yellow-500 hover:bg-yellow-600' : ''}
+                                    className={!frequency.terminal_operations || frequency.terminal_operations.length === 0 ? 'bg-green-500 hover:bg-green-600 text-white' : ''}
                                   >
                                     {expandedFrequency === frequency.id ? 'Ocultar' : 
                                      (!frequency.terminal_operations || frequency.terminal_operations.length === 0) ? 
-                                     'Agregar Pasajeros' : 'Ver'} Terminales
+                                     '+ Agregar Pasajeros' : 'Gestionar'} Terminales
                                   </Button>
                                   <Button
                                     size="sm"

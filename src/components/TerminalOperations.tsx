@@ -63,7 +63,7 @@ interface TerminalOperationsProps {
 
 const TerminalOperations: React.FC<TerminalOperationsProps> = ({ frequency, onUpdate }) => {
   const { toast } = useToast();
-  const { user } = useAuth();
+  const { user, userRole } = useAuth();
   const [operations, setOperations] = useState<TerminalOperation[]>([]);
   const [terminals, setTerminals] = useState<Terminal[]>([]);
   const [userAssignedTerminals, setUserAssignedTerminals] = useState<Terminal[]>([]);
@@ -125,6 +125,19 @@ const TerminalOperations: React.FC<TerminalOperationsProps> = ({ frequency, onUp
     if (!user) return;
     
     try {
+      // Administrators can access all terminals
+      if (userRole?.role === 'administrator' || userRole?.role === 'manager') {
+        const { data: allTerminals, error } = await supabase
+          .from('terminals')
+          .select('*')
+          .eq('is_active', true)
+          .order('name');
+        
+        if (error) throw error;
+        setUserAssignedTerminals(allTerminals || []);
+        return;
+      }
+
       // Get terminals assigned to this user that are also part of this route
       const { data, error } = await supabase
         .from('terminal_assignments')
@@ -381,7 +394,7 @@ const TerminalOperations: React.FC<TerminalOperationsProps> = ({ frequency, onUp
                   }
                 }}>
                   <SelectTrigger>
-                    <SelectValue placeholder="Seleccionar terminal asignada" />
+                    <SelectValue placeholder="Seleccionar terminal" />
                   </SelectTrigger>
                   <SelectContent>
                     {userAssignedTerminals.map((terminal) => (
@@ -389,6 +402,9 @@ const TerminalOperations: React.FC<TerminalOperationsProps> = ({ frequency, onUp
                         {terminal.name} - {terminal.location}
                       </SelectItem>
                     ))}
+                    {(userRole?.role === 'administrator' || userRole?.role === 'manager') && (
+                      <SelectItem value="custom">Agregar terminal personalizada</SelectItem>
+                    )}
                   </SelectContent>
                 </Select>
               ) : (
@@ -396,6 +412,15 @@ const TerminalOperations: React.FC<TerminalOperationsProps> = ({ frequency, onUp
                   value={terminalName}
                   onChange={(e) => setTerminalName(e.target.value)}
                   placeholder="Ej: Terminal Central, Estación Norte, etc."
+                />
+              )}
+              
+              {selectedTerminalId === 'custom' && (
+                <Input
+                  value={terminalName}
+                  onChange={(e) => setTerminalName(e.target.value)}
+                  placeholder="Nombre de terminal personalizada"
+                  className="mt-2"
                 />
               )}
             </div>
@@ -435,7 +460,7 @@ const TerminalOperations: React.FC<TerminalOperationsProps> = ({ frequency, onUp
               </Button>
               <Button 
                 onClick={addTerminalOperation}
-                disabled={(!selectedTerminalId && !terminalName.trim()) || loading}
+                disabled={(!selectedTerminalId && !terminalName.trim()) || loading || (selectedTerminalId === 'custom' && !terminalName.trim())}
               >
                 {loading ? 'Guardando...' : 'Agregar Operación'}
               </Button>
