@@ -38,7 +38,7 @@ interface UserOption {
   user_id: string;
   first_name: string;
   surname_1: string;
-  role?: string;
+  roles?: string[];
 }
 
 const GestorBuses = () => {
@@ -124,19 +124,23 @@ const GestorBuses = () => {
 
       if (rolesError) throw rolesError;
 
-      // Combine profiles with roles
-      const usersWithRoles = (profilesData || []).map(profile => {
-        const userRole = rolesData?.find(role => role.user_id === profile.user_id);
-        return {
-          ...profile,
-          role: userRole?.role || 'client'
-        };
+      // Combine profiles with roles (support multiple roles per user)
+      const rolesMap = new Map<string, string[]>();
+      (rolesData || []).forEach((r: { user_id: string; role: string }) => {
+        const arr = rolesMap.get(r.user_id) || [];
+        arr.push(r.role);
+        rolesMap.set(r.user_id, arr);
       });
 
+      const usersWithRoles: UserOption[] = (profilesData || []).map((profile) => ({
+        ...profile,
+        roles: rolesMap.get(profile.user_id) || []
+      }));
+
       setUsers(usersWithRoles);
-      setPartners(usersWithRoles.filter(user => user.role === 'partner'));
-      setDrivers(usersWithRoles.filter(user => user.role === 'driver'));
-      setOfficials(usersWithRoles.filter(user => user.role === 'official'));
+      setPartners(usersWithRoles.filter((u) => u.roles?.includes('partner')));
+      setDrivers(usersWithRoles.filter((u) => u.roles?.includes('driver')));
+      setOfficials(usersWithRoles.filter((u) => u.roles?.includes('official')));
     } catch (error: any) {
       console.error('Error loading users:', error);
     }
