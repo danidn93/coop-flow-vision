@@ -209,14 +209,25 @@ const GestorUsuarios = () => {
     }
 
     setIsLoadingUserData(true);
+    console.log('Frontend: Checking email:', email);
+    
     try {
       const { data, error } = await supabase.functions.invoke('check-user', { body: { email } });
-      if (error) throw error;
+      
+      console.log('Frontend: Response from check-user:', { data, error });
+      
+      if (error) {
+        console.error('Frontend: Error from check-user:', error);
+        throw error;
+      }
 
       if (data && (data as any).exists) {
         const payload = data as any;
         const profile = payload.profile || {};
         const rolesArr: string[] = payload.roles || [];
+        
+        console.log('Frontend: User exists, loading data:', { profile, rolesArr });
+        
         setFormData({
           ...formData,
           email,
@@ -233,7 +244,13 @@ const GestorUsuarios = () => {
         setExistingUserId(payload.user?.id || null);
         setIsExistingUser(true);
         setUserDataLoaded(true);
+        
+        toast({
+          title: "Usuario encontrado",
+          description: "Se cargaron los datos del usuario existente",
+        });
       } else {
+        console.log('Frontend: User does not exist, clearing form');
         // Not found: clear fields (except email) and reset roles/password
         setFormData({
           email,
@@ -253,6 +270,7 @@ const GestorUsuarios = () => {
         setUserDataLoaded(false);
       }
     } catch (err) {
+      console.error('Frontend: Catch block error:', err);
       setIsExistingUser(false);
       setExistingRoles([]);
       setExistingUserId(null);

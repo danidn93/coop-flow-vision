@@ -42,6 +42,8 @@ const handler = async (req: Request): Promise<Response> => {
     }
 
     const email = (payload.email || '').trim().toLowerCase();
+    console.log('Checking email:', email);
+    
     if (!email || !email.includes('@')) {
       return new Response(JSON.stringify({ error: 'Email inválido' }), {
         status: 400,
@@ -55,23 +57,41 @@ const handler = async (req: Request): Promise<Response> => {
       { auth: { autoRefreshToken: false, persistSession: false } }
     );
 
-    // List users and find by email (avoid direct HTTP calls)
-    const { data: usersData, error: listErr } = await supabaseAdmin.auth.admin.listUsers({ page: 1, perPage: 1000 });
-    if (listErr) {
-      console.error('listUsers error:', listErr);
+    // Use REST API to check if user exists with specific email
+    console.log('Making request to admin users API...');
+    const emailCheckResponse = await fetch(
+      `${Deno.env.get('SUPABASE_URL')}/auth/v1/admin/users?email=${encodeURIComponent(email)}`,
+      {
+        method: 'GET',
+        headers: {
+          'Authorization': `Bearer ${Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')}`,
+          'Content-Type': 'application/json',
+          'apikey': Deno.env.get('SUPABASE_SERVICE_ROLE_KEY') ?? ''
+        }
+      }
+    );
+
+    if (!emailCheckResponse.ok) {
+      console.error('Email check API failed:', await emailCheckResponse.text());
       return new Response(JSON.stringify({ error: 'Error consultando usuarios' }), {
         status: 500,
         headers: { 'Content-Type': 'application/json', ...corsHeaders },
       });
     }
 
-    const user = usersData?.users?.find((u) => (u.email || '').toLowerCase() === email);
-    if (!user) {
+    const existingUsers = await emailCheckResponse.json();
+    console.log('API response:', JSON.stringify(existingUsers, null, 2));
+
+    if (!existingUsers.users || existingUsers.users.length === 0) {
+      console.log('No user found with email:', email);
       return new Response(JSON.stringify({ exists: false }), {
         status: 200,
         headers: { 'Content-Type': 'application/json', ...corsHeaders },
       });
     }
+
+    const user = existingUsers.users[0];
+    console.log('Found user:', user.id, 'with email:', user.email);
 
     // Fetch profile
     const { data: profile, error: profileErr } = await supabaseAdmin
@@ -95,6 +115,7 @@ const handler = async (req: Request): Promise<Response> => {
     }
 
     const roles = (rolesRows || []).map((r: any) => r.role);
+    console.log('User roles:', roles);
 
     return new Response(
       JSON.stringify({
