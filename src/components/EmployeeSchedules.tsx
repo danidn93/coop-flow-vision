@@ -116,7 +116,7 @@ const EmployeeSchedules: React.FC = () => {
       const { data, error } = await supabase
         .from('user_roles')
         .select('user_id, role')
-        .in('role', ['employee', 'driver', 'official']);
+        .eq('role', 'employee');
 
       if (error) throw error;
       
