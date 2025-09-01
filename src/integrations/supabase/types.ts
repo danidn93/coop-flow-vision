@@ -658,41 +658,52 @@ export type Database = {
       terminal_operations: {
         Row: {
           created_at: string
+          frequency_id: string | null
           id: string
           passengers_count: number
           recorded_at: string
           recorded_by: string
           revenue: number
-          route_frequency_id: string
+          route_frequency_id: string | null
           terminal_name: string
           terminal_order: number
           updated_at: string
         }
         Insert: {
           created_at?: string
+          frequency_id?: string | null
           id?: string
           passengers_count?: number
           recorded_at?: string
           recorded_by: string
           revenue?: number
-          route_frequency_id: string
+          route_frequency_id?: string | null
           terminal_name: string
           terminal_order?: number
           updated_at?: string
         }
         Update: {
           created_at?: string
+          frequency_id?: string | null
           id?: string
           passengers_count?: number
           recorded_at?: string
           recorded_by?: string
           revenue?: number
-          route_frequency_id?: string
+          route_frequency_id?: string | null
           terminal_name?: string
           terminal_order?: number
           updated_at?: string
         }
-        Relationships: []
+        Relationships: [
+          {
+            foreignKeyName: "terminal_operations_frequency_id_fkey"
+            columns: ["frequency_id"]
+            isOneToOne: false
+            referencedRelation: "route_frequencies"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       user_points: {
         Row: {

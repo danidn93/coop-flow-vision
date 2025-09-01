@@ -4,11 +4,12 @@ import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Input } from "@/components/ui/input";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
+import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { supabase } from '@/integrations/supabase/client';
 import { useToast } from '@/hooks/use-toast';
 import { useAuth } from '@/hooks/useAuth';
-import { Clock, Bus, Users, Calendar, ArrowRight } from "lucide-react";
+import { Clock, Bus, Users, ArrowRight, MapPin } from "lucide-react";
+import TerminalOperations from '@/components/TerminalOperations';
 
 interface RouteFrequency {
   id: string;
@@ -32,6 +33,12 @@ interface RouteFrequency {
     alias: string;
     plate: string;
   };
+  terminal_operations?: Array<{
+    id: string;
+    terminal_name: string;
+    passengers_count: number;
+    revenue: number;
+  }>;
 }
 
 const GestorFrecuencias = () => {
@@ -44,11 +51,9 @@ const GestorFrecuencias = () => {
   const [selectedRoute, setSelectedRoute] = useState<string>('');
   const [selectedDate, setSelectedDate] = useState<string>(new Date().toISOString().split('T')[0]);
   const [isAssignDialogOpen, setIsAssignDialogOpen] = useState(false);
-  const [isCloseDialogOpen, setIsCloseDialogOpen] = useState(false);
   const [selectedFrequency, setSelectedFrequency] = useState<RouteFrequency | null>(null);
+  const [expandedFrequency, setExpandedFrequency] = useState<string | null>(null);
   const [selectedBus, setSelectedBus] = useState<string>('');
-  const [passengersCount, setPassengersCount] = useState<number>(0);
-  const [revenue, setRevenue] = useState<number>(0);
   const [startTime, setStartTime] = useState<string>('05:00');
   const [endTime, setEndTime] = useState<string>('22:00');
   const [frequencyMinutes, setFrequencyMinutes] = useState<number>(15);
@@ -107,7 +112,14 @@ const GestorFrecuencias = () => {
         .select(`
           *,
           routes!inner(name, origin, destination),
-          buses(id, alias, plate)
+          buses(id, alias, plate),
+          terminal_operations(
+            id,
+            terminal_name,
+            passengers_count,
+            revenue,
+            terminal_order
+          )
         `)
         .eq('route_id', routeId)
         .eq('frequency_date', date)
@@ -143,38 +155,27 @@ const GestorFrecuencias = () => {
     }
   };
 
-  const addFrequencyClosure = async () => {
-    if (!selectedFrequency) return;
-
+  const completeFrequency = async (frequencyId: string) => {
     try {
       const { error } = await supabase
         .from('route_frequencies')
-        .update({ 
-          passengers_count: passengersCount,
-          revenue: revenue,
-          status: 'completed'
-        })
-        .eq('id', selectedFrequency.id);
+        .update({ status: 'completed' })
+        .eq('id', frequencyId);
 
       if (error) throw error;
 
       toast({
         title: "Éxito",
-        description: "Cierre de frecuencia registrado correctamente",
+        description: "Frecuencia marcada como completada",
       });
 
-      setIsCloseDialogOpen(false);
-      setSelectedFrequency(null);
-      setPassengersCount(0);
-      setRevenue(0);
-      
       if (selectedRoute && selectedDate) {
         loadFrequencies(selectedRoute, selectedDate);
       }
     } catch (error: any) {
       toast({
         title: "Error",
-        description: "No se pudo registrar el cierre",
+        description: "No se pudo completar la frecuencia",
         variant: "destructive",
       });
     }
@@ -439,97 +440,123 @@ const GestorFrecuencias = () => {
               ) : (
                 <div className="grid gap-4">
                   {frequencies.map((frequency) => (
-                    <div key={frequency.id} className="flex items-center justify-between p-4 border rounded-lg">
-                      <div className="flex items-center space-x-4">
-                        <div className="flex items-center space-x-2">
-                          <Badge 
-                            variant={frequency.is_first_turn ? 'default' : frequency.is_last_turn ? 'secondary' : 'outline'}
-                          >
-                            {frequency.is_first_turn ? 'Primer Turno' : 
-                             frequency.is_last_turn ? 'Último Turno' : 
-                             `Frecuencia ${frequency.frequency_number}`}
-                          </Badge>
-                        </div>
-                        
-                        <div className="flex items-center space-x-2">
-                          <Clock className="h-4 w-4 text-muted-foreground" />
-                          <span className="font-medium">{formatTime(frequency.departure_time)}</span>
-                          <ArrowRight className="h-4 w-4 text-muted-foreground" />
-                          <span className="font-medium">{formatTime(frequency.arrival_time)}</span>
+                    <div key={frequency.id} className="space-y-4">
+                      <div className="flex items-center justify-between p-4 border rounded-lg">
+                        <div className="flex items-center space-x-4">
+                          <div className="flex items-center space-x-2">
+                            <Badge 
+                              variant={frequency.is_first_turn ? 'default' : frequency.is_last_turn ? 'secondary' : 'outline'}
+                            >
+                              {frequency.is_first_turn ? 'Primer Turno' : 
+                               frequency.is_last_turn ? 'Último Turno' : 
+                               `Frecuencia ${frequency.frequency_number}`}
+                            </Badge>
+                          </div>
+                          
+                          <div className="flex items-center space-x-2">
+                            <Clock className="h-4 w-4 text-muted-foreground" />
+                            <span className="font-medium">{formatTime(frequency.departure_time)}</span>
+                            <ArrowRight className="h-4 w-4 text-muted-foreground" />
+                            <span className="font-medium">{formatTime(frequency.arrival_time)}</span>
+                          </div>
+
+                          {frequency.buses ? (
+                            <div className="flex items-center space-x-2">
+                              <Bus className="h-4 w-4 text-muted-foreground" />
+                              <span className="text-sm">
+                                {frequency.buses.alias} ({frequency.buses.plate})
+                              </span>
+                              {frequency.terminal_operations && frequency.terminal_operations.length > 0 && (
+                                <div className="flex items-center space-x-4 ml-4">
+                                  <div className="flex items-center space-x-1">
+                                    <Users className="h-3 w-3" />
+                                    <span className="text-xs">
+                                      {frequency.terminal_operations.reduce((sum, op) => sum + op.passengers_count, 0)} pax
+                                    </span>
+                                  </div>
+                                  <div className="flex items-center space-x-1">
+                                    <span className="text-xs">$</span>
+                                    <span className="text-xs">
+                                      {frequency.terminal_operations.reduce((sum, op) => sum + op.revenue, 0).toFixed(2)}
+                                    </span>
+                                  </div>
+                                  <div className="flex items-center space-x-1">
+                                    <MapPin className="h-3 w-3" />
+                                    <span className="text-xs">{frequency.terminal_operations.length} terminales</span>
+                                  </div>
+                                </div>
+                              )}
+                            </div>
+                          ) : (
+                            <div className="flex items-center space-x-2 text-muted-foreground">
+                              <Users className="h-4 w-4" />
+                              <span className="text-sm">Sin asignar</span>
+                            </div>
+                          )}
                         </div>
 
-                        {frequency.buses ? (
-                          <div className="flex items-center space-x-2">
-                            <Bus className="h-4 w-4 text-muted-foreground" />
-                            <span className="text-sm">
-                              {frequency.buses.alias} ({frequency.buses.plate})
-                            </span>
-                            {frequency.status === 'completed' && (
-                              <div className="flex items-center space-x-4 ml-4">
-                                <div className="flex items-center space-x-1">
-                                  <Users className="h-3 w-3" />
-                                  <span className="text-xs">{frequency.passengers_count} pax</span>
-                                </div>
-                                <div className="flex items-center space-x-1">
-                                  <span className="text-xs">$</span>
-                                  <span className="text-xs">{frequency.revenue}</span>
-                                </div>
-                              </div>
+                        {canManage && (
+                          <div className="flex gap-2">
+                            <Button
+                              size="sm"
+                              variant="destructive"
+                              onClick={() => cancelFrequency(frequency.id)}
+                            >
+                              Cancelar
+                            </Button>
+                            {frequency.buses ? (
+                              frequency.status === 'completed' ? (
+                                <Badge variant="default">Completada</Badge>
+                              ) : (
+                                <>
+                                  <Button
+                                    size="sm"
+                                    variant="outline"
+                                    onClick={() => unassignBusFromFrequency(frequency.id)}
+                                  >
+                                    Desasignar
+                                  </Button>
+                                  <Button
+                                    size="sm"
+                                    variant="outline"
+                                    onClick={() => {
+                                      setExpandedFrequency(
+                                        expandedFrequency === frequency.id ? null : frequency.id
+                                      );
+                                    }}
+                                  >
+                                    {expandedFrequency === frequency.id ? 'Ocultar' : 'Ver'} Terminales
+                                  </Button>
+                                  <Button
+                                    size="sm"
+                                    onClick={() => completeFrequency(frequency.id)}
+                                    disabled={!frequency.terminal_operations || frequency.terminal_operations.length === 0}
+                                  >
+                                    Completar Ruta
+                                  </Button>
+                                </>
+                              )
+                            ) : (
+                              <Button
+                                size="sm"
+                                onClick={() => {
+                                  setSelectedFrequency(frequency);
+                                  setIsAssignDialogOpen(true);
+                                }}
+                              >
+                                Asignar Bus
+                              </Button>
                             )}
-                          </div>
-                        ) : (
-                          <div className="flex items-center space-x-2 text-muted-foreground">
-                            <Users className="h-4 w-4" />
-                            <span className="text-sm">Sin asignar</span>
                           </div>
                         )}
                       </div>
-
-                      {canManage && (
-                        <div className="flex gap-2">
-                          <Button
-                            size="sm"
-                            variant="destructive"
-                            onClick={() => cancelFrequency(frequency.id)}
-                          >
-                            Cancelar
-                          </Button>
-                          {frequency.buses ? (
-                            frequency.status === 'completed' ? (
-                              <Badge variant="default">Completada</Badge>
-                            ) : (
-                              <>
-                                <Button
-                                  size="sm"
-                                  variant="outline"
-                                  onClick={() => unassignBusFromFrequency(frequency.id)}
-                                >
-                                  Desasignar
-                                </Button>
-                                <Button
-                                  size="sm"
-                                  onClick={() => {
-                                    setSelectedFrequency(frequency);
-                                    setPassengersCount(frequency.passengers_count || 0);
-                                    setRevenue(frequency.revenue || 0);
-                                    setIsCloseDialogOpen(true);
-                                  }}
-                                >
-                                  Agregar Cierre
-                                </Button>
-                              </>
-                            )
-                          ) : (
-                            <Button
-                              size="sm"
-                              onClick={() => {
-                                setSelectedFrequency(frequency);
-                                setIsAssignDialogOpen(true);
-                              }}
-                            >
-                              Asignar Bus
-                            </Button>
-                          )}
+                      
+                      {expandedFrequency === frequency.id && frequency.buses && (
+                        <div className="ml-4 border-l-2 border-muted pl-4">
+                          <TerminalOperations 
+                            frequency={frequency} 
+                            onUpdate={() => loadFrequencies(selectedRoute, selectedDate)} 
+                          />
                         </div>
                       )}
                     </div>
@@ -588,70 +615,6 @@ const GestorFrecuencias = () => {
                 disabled={!selectedBus}
               >
                 Asignar Bus
-              </Button>
-            </div>
-          </div>
-        </DialogContent>
-      </Dialog>
-
-      <Dialog open={isCloseDialogOpen} onOpenChange={setIsCloseDialogOpen}>
-        <DialogContent>
-          <DialogHeader>
-            <DialogTitle>Cerrar Frecuencia</DialogTitle>
-          </DialogHeader>
-          <div className="space-y-4">
-            {selectedFrequency && (
-              <div className="p-3 bg-muted rounded-lg">
-                <p className="font-medium">
-                  Frecuencia: {formatTime(selectedFrequency.departure_time)} - {formatTime(selectedFrequency.arrival_time)}
-                </p>
-                <p className="text-sm text-muted-foreground">
-                  {selectedFrequency.routes?.origin} - {selectedFrequency.routes?.destination}
-                </p>
-                {selectedFrequency.buses && (
-                  <p className="text-sm text-muted-foreground">
-                    Bus: {selectedFrequency.buses.alias} ({selectedFrequency.buses.plate})
-                  </p>
-                )}
-              </div>
-            )}
-            
-            <div className="grid gap-4 md:grid-cols-2">
-              <div>
-                <label className="block text-sm font-medium mb-2">Cantidad de Pasajeros</label>
-                <Input
-                  type="number"
-                  min="0"
-                  value={passengersCount}
-                  onChange={(e) => setPassengersCount(parseInt(e.target.value) || 0)}
-                  placeholder="0"
-                />
-              </div>
-              
-              <div>
-                <label className="block text-sm font-medium mb-2">Ingresos ($)</label>
-                <Input
-                  type="number"
-                  min="0"
-                  step="0.01"
-                  value={revenue}
-                  onChange={(e) => setRevenue(parseFloat(e.target.value) || 0)}
-                  placeholder="0.00"
-                />
-              </div>
-            </div>
-
-            <div className="flex justify-end gap-2">
-              <Button 
-                variant="outline" 
-                onClick={() => setIsCloseDialogOpen(false)}
-              >
-                Cancelar
-              </Button>
-              <Button 
-                onClick={addFrequencyClosure}
-              >
-                Guardar Cierre
               </Button>
             </div>
           </div>
