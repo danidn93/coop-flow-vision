@@ -155,7 +155,7 @@ const handler = async (req: Request): Promise<Response> => {
       // Ensure profile exists for this auth user
       const { data: profileByUser, error: profileByUserError } = await supabaseAdmin
         .from('profiles')
-        .select('id')
+        .select('*')
         .eq('user_id', existingUser.id)
         .maybeSingle();
 
@@ -197,7 +197,7 @@ const handler = async (req: Request): Promise<Response> => {
         }
       }
 
-      // Ensure role exists/updated
+      // Get existing role
       const { data: existingRole, error: roleFetchError } = await supabaseAdmin
         .from('user_roles')
         .select('id, role')
@@ -208,6 +208,7 @@ const handler = async (req: Request): Promise<Response> => {
         console.error('Error checking existing role:', roleFetchError);
       }
 
+      // Update or insert role
       if (existingRole) {
         if (existingRole.role !== signupData.role) {
           console.log('Updating role for existing user');
@@ -229,10 +230,32 @@ const handler = async (req: Request): Promise<Response> => {
         }
       }
 
+      // Return existing user data
+      const userData = profileByUser ? {
+        first_name: profileByUser.first_name,
+        middle_name: profileByUser.middle_name,
+        surname_1: profileByUser.surname_1,
+        surname_2: profileByUser.surname_2,
+        id_number: profileByUser.id_number,
+        phone: profileByUser.phone,
+        address: profileByUser.address,
+        role: signupData.role // Use the role being assigned
+      } : {
+        first_name: signupData.first_name,
+        middle_name: signupData.middle_name,
+        surname_1: signupData.surname_1,
+        surname_2: signupData.surname_2,
+        id_number: signupData.id_number,
+        phone: signupData.phone,
+        address: signupData.address,
+        role: signupData.role
+      };
+
       return new Response(
         JSON.stringify({
-          message: 'Usuario existente actualizado',
-          user: { id: existingUser.id, email: existingUser.email }
+          message: 'Usuario existente encontrado',
+          user: { id: existingUser.id, email: existingUser.email },
+          user_data: userData
         }),
         {
           status: 200,

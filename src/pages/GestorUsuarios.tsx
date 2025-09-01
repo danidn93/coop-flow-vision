@@ -49,6 +49,8 @@ const GestorUsuarios = () => {
     address: '',
     role: 'client'
   });
+  const [isLoadingUserData, setIsLoadingUserData] = useState(false);
+  const [userDataLoaded, setUserDataLoaded] = useState(false);
 
   useEffect(() => {
     loadUsers();
@@ -126,7 +128,7 @@ const GestorUsuarios = () => {
       
       toast({
         title: "Éxito",
-        description: "Usuario creado correctamente",
+        description: data?.message || (userDataLoaded ? "Usuario actualizado correctamente" : "Usuario creado correctamente"),
       });
       
       setIsDialogOpen(false);
@@ -179,6 +181,82 @@ const GestorUsuarios = () => {
     }
   };
 
+  const checkUserByEmail = async (email: string) => {
+    if (!email || email.length < 5 || !email.includes('@')) {
+      setUserDataLoaded(false);
+      return;
+    }
+
+    setIsLoadingUserData(true);
+    try {
+      // Check if user exists and get their data
+      const { data, error } = await supabase.functions.invoke('admin-signup', {
+        body: {
+          email: email,
+          password: 'temp', // Temporary password, will be ignored if user exists
+          first_name: 'temp',
+          surname_1: 'temp',
+          id_number: 'temp',
+          phone: 'temp',
+          address: 'temp',
+          role: 'client'
+        }
+      });
+
+      if (data && data.user_data) {
+        // User exists, load their data
+        const userData = data.user_data;
+        setFormData({
+          ...formData,
+          email: email,
+          first_name: userData.first_name || '',
+          middle_name: userData.middle_name || '',
+          surname_1: userData.surname_1 || '',
+          surname_2: userData.surname_2 || '',
+          id_number: userData.id_number || '',
+          phone: userData.phone || '',
+          address: userData.address || '',
+          role: userData.role || 'client'
+        });
+        setUserDataLoaded(true);
+        
+        toast({
+          title: "Usuario encontrado",
+          description: "Se cargaron los datos del usuario existente",
+        });
+      } else {
+        setUserDataLoaded(false);
+      }
+    } catch (error: any) {
+      // If error is about user not existing, that's fine
+      setUserDataLoaded(false);
+    } finally {
+      setIsLoadingUserData(false);
+    }
+  };
+
+  const handleEmailChange = (email: string) => {
+    setFormData({...formData, email});
+    
+    // Reset loaded state when email changes
+    if (userDataLoaded) {
+      setUserDataLoaded(false);
+    }
+  };
+
+  // Debounce email checking
+  useEffect(() => {
+    if (formData.email && formData.email.length > 5 && formData.email.includes('@')) {
+      const timeoutId = setTimeout(() => {
+        checkUserByEmail(formData.email);
+      }, 1000);
+      
+      return () => clearTimeout(timeoutId);
+    } else {
+      setUserDataLoaded(false);
+    }
+  }, [formData.email]);
+
   const resetForm = () => {
     setFormData({
       email: '',
@@ -192,6 +270,7 @@ const GestorUsuarios = () => {
       address: '',
       role: 'client'
     });
+    setUserDataLoaded(false);
   };
 
   const openRoleDialog = (user: UserProfile) => {
@@ -293,13 +372,27 @@ const GestorUsuarios = () => {
                 <div className="grid grid-cols-2 gap-4">
                   <div className="space-y-2">
                     <Label htmlFor="email">Email *</Label>
-                    <Input
-                      id="email"
-                      type="email"
-                      value={formData.email}
-                      onChange={(e) => setFormData({...formData, email: e.target.value})}
-                      required
-                    />
+                    <div className="relative">
+                      <Input
+                        id="email"
+                        type="email"
+                        value={formData.email}
+                        onChange={(e) => {
+                          handleEmailChange(e.target.value);
+                        }}
+                        required
+                      />
+                      {isLoadingUserData && (
+                        <div className="absolute right-2 top-2.5">
+                          <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-primary"></div>
+                        </div>
+                      )}
+                    </div>
+                    {userDataLoaded && (
+                      <p className="text-xs text-green-600">
+                        ✓ Datos del usuario existente cargados automáticamente
+                      </p>
+                    )}
                   </div>
                   
                   <div className="space-y-2">
@@ -414,7 +507,7 @@ const GestorUsuarios = () => {
                     Cancelar
                   </Button>
                   <Button type="submit">
-                    Crear Usuario
+                    {userDataLoaded ? 'Actualizar Usuario' : 'Crear Usuario'}
                   </Button>
                 </div>
               </form>
