@@ -150,7 +150,7 @@ const handler = async (req: Request): Promise<Response> => {
       .map(role => roleNames[role as keyof typeof roleNames] || role)
       .join(', ');
 
-    const userName = userProfile ? `${userProfile.first_name} ${userProfile.surname_1}` : (user.email ?? 'Usuario');
+    const userName = userProfile ? `${userProfile.first_name} ${userProfile.surname_1}` : user.email;
     
     for (const adminRole of adminRoles) {
       const { error: notificationError } = await supabase
