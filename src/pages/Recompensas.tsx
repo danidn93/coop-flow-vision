@@ -211,6 +211,7 @@ const Recompensas = () => {
       const { data: config } = await supabase
         .from('cooperative_config')
         .select('max_daily_tickets, reward_points_per_ticket')
+        .limit(1)
         .single();
 
       const maxTickets = config?.max_daily_tickets || 5;
@@ -225,14 +226,17 @@ const Recompensas = () => {
         return;
       }
 
-      // Create ticket record
+      // Create ticket record - auto-validate for clients
       const { error: ticketError } = await supabase
         .from('user_tickets')
         .insert({
           user_id: user.id,
           route_id: selectedRoute,
           ticket_number: ticketNumber.trim(),
-          points_earned: pointsPerTicket
+          points_earned: pointsPerTicket,
+          validated: true, // Auto-validate for clients
+          validated_at: new Date().toISOString(),
+          validated_by: user.id
         });
 
       if (ticketError) throw ticketError;
