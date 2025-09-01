@@ -77,7 +77,7 @@ const [frequencyMinutes, setFrequencyMinutes] = useState<number>(15);
       const { data: busesData, error: busesError } = await supabase
         .from('buses')
         .select('*')
-        .eq('status', 'en_servicio')
+        .in('status', ['disponible', 'en_servicio'])
         .order('plate');
 
       if (busesError) throw busesError;
