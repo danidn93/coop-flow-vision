@@ -64,6 +64,7 @@ const handler = async (req: Request): Promise<Response> => {
     let signupData: SignupRequest;
     try {
       signupData = JSON.parse(text);
+      console.log('Received signup data:', signupData);
     } catch (parseError) {
       console.error('JSON parse error:', parseError);
       return new Response(

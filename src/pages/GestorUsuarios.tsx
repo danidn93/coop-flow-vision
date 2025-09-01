@@ -115,9 +115,8 @@ const GestorUsuarios = () => {
       });
 
       if (error) {
-        const ctx: any = (error as any).context;
-        const serverMsg = typeof ctx === 'string' ? ctx : ctx?.error || ctx?.message;
-        throw new Error(serverMsg || error.message || 'Error al crear el usuario');
+        console.error('Admin signup error:', error);
+        throw new Error(error.message || 'Error al crear el usuario');
       }
 
       // For seguridad: si la función responde 200 pero con payload de error
