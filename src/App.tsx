@@ -13,7 +13,9 @@ import GestorUsuarios from "./pages/GestorUsuarios";
 import GestorBuses from "./pages/GestorBuses";
 import GestorRutas from "./pages/GestorRutas";
 import GestorFrecuencias from "./pages/GestorFrecuencias";
-import GestorTerminales from "./pages/GestorTerminales";
+import GestorTerminalesPage from "./pages/GestorTerminales";
+import GestorHorariosPage from "./pages/GestorHorarios";
+import AuditLog from "./components/AuditLog";
 import Recompensas from "./pages/Recompensas";
 import ConfiguracionCooperativa from "./pages/ConfiguracionCooperativa";
 import ConfiguracionTema from "./pages/ConfiguracionTema";
@@ -25,7 +27,6 @@ import Reportes from "./pages/Reportes";
 import Configuracion from "./pages/Configuracion";
 import NotFound from "./pages/NotFound";
 import ProtectedRoute from "./components/ProtectedRoute";
-import AuditLog from "./components/AuditLog";
 
 const queryClient = new QueryClient();
 
@@ -118,14 +119,14 @@ const App = () => (
             <Route path="/gestor-terminales" element={
               <ProtectedRoute allowedRoles={['administrator', 'manager']}>
                 <DashboardLayout>
-                  <GestorTerminales />
+                  <GestorTerminalesPage />
                 </DashboardLayout>
               </ProtectedRoute>
             } />
-            <Route path="/auditoria" element={
-              <ProtectedRoute allowedRoles={['administrator', 'manager']}>
+            <Route path="/gestor-horarios" element={
+              <ProtectedRoute allowedRoles={['administrator', 'manager', 'president']}>
                 <DashboardLayout>
-                  <AuditLog />
+                  <GestorHorariosPage />
                 </DashboardLayout>
               </ProtectedRoute>
             } />

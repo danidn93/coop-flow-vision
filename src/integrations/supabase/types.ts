@@ -261,6 +261,45 @@ export type Database = {
         }
         Relationships: []
       }
+      employee_schedules: {
+        Row: {
+          created_at: string
+          created_by: string
+          day_of_week: number
+          employee_id: string
+          end_time: string
+          id: string
+          is_active: boolean
+          role: Database["public"]["Enums"]["app_role"]
+          start_time: string
+          updated_at: string
+        }
+        Insert: {
+          created_at?: string
+          created_by: string
+          day_of_week: number
+          employee_id: string
+          end_time: string
+          id?: string
+          is_active?: boolean
+          role: Database["public"]["Enums"]["app_role"]
+          start_time: string
+          updated_at?: string
+        }
+        Update: {
+          created_at?: string
+          created_by?: string
+          day_of_week?: number
+          employee_id?: string
+          end_time?: string
+          id?: string
+          is_active?: boolean
+          role?: Database["public"]["Enums"]["app_role"]
+          start_time?: string
+          updated_at?: string
+        }
+        Relationships: []
+      }
       faq_intents: {
         Row: {
           created_at: string
@@ -1045,6 +1084,13 @@ export type Database = {
       reset_daily_bus_assignments: {
         Args: Record<PropertyKey, never>
         Returns: undefined
+      }
+      validate_employee_schedule_access: {
+        Args: {
+          p_role: Database["public"]["Enums"]["app_role"]
+          p_user_id: string
+        }
+        Returns: boolean
       }
     }
     Enums: {

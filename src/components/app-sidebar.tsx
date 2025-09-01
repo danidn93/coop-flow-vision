@@ -1,7 +1,7 @@
 import { NavLink, useLocation } from "react-router-dom";
 import { 
   Home, Users, MapPin, Settings, FileText, Bus, 
-  Calendar, Clock, LogOut, UserCheck, MessageSquare, MessageCircle, AlertTriangle, Gift, Building, Palette, UserPlus, Archive
+  Calendar, Clock, LogOut, UserCheck, MessageSquare, AlertTriangle, Gift, Building, Palette, UserPlus, Archive
 } from "lucide-react";
 import {
   Sidebar,
@@ -20,14 +20,15 @@ import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { useAuth } from "@/hooks/useAuth";
 
-  const rawMenuItems = [
+const rawMenuItems = [
   { title: "Inicio", url: "/", icon: Home },
   { title: "Usuarios", url: "/usuarios", icon: Users },
   { title: "Solicitudes de Roles", url: "/solicitudes-roles", icon: UserPlus },
   { title: "Buses", url: "/buses", icon: Bus },
   { title: "Rutas", url: "/rutas", icon: MapPin },
-  { title: "Frecuencias", url: "/gestor-frecuencias", icon: Clock },
+  { title: "Frecuencias", url: "/gestor-frecuencias", icon: Calendar },
   { title: "Terminales", url: "/gestor-terminales", icon: Building },
+  { title: "Horarios", url: "/gestor-horarios", icon: Clock },
   { title: "Recompensas", url: "/recompensas", icon: Gift },
   { title: "Chat Soporte", url: "/chat-soporte", icon: MessageSquare },
   { title: "Incidentes", url: "/incidentes", icon: AlertTriangle },
@@ -74,9 +75,11 @@ export function AppSidebar() {
     if (item.url === '/gestion-incidentes') return ['administrator', 'manager', 'president', 'employee'].includes(userRole?.role || '');
     if (item.url === '/configuracion-cooperativa') return userRole?.role === 'administrator';
     if (item.url === '/gestor-terminales') return ['administrator', 'manager'].includes(userRole?.role || '');
+    if (item.url === '/gestor-horarios') return ['administrator', 'manager', 'president'].includes(userRole?.role || '');
     if (item.url === '/auditoria') return ['administrator', 'manager'].includes(userRole?.role || '');
     return true;
   });
+
   return (
     <Sidebar className={isCollapsed ? "w-16" : "w-64"} collapsible="icon">
       <SidebarHeader className="border-b border-border/50 p-4">
