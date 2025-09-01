@@ -1,7 +1,7 @@
 import { NavLink, useLocation } from "react-router-dom";
 import { 
   Home, Users, MapPin, Settings, FileText, Bus, 
-  Calendar, Clock, LogOut, UserCheck, MessageSquare, MessageCircle, AlertTriangle, Gift, Building
+  Calendar, Clock, LogOut, UserCheck, MessageSquare, MessageCircle, AlertTriangle, Gift, Building, Palette
 } from "lucide-react";
 import {
   Sidebar,
@@ -33,6 +33,7 @@ const menuItems = [
   { title: "Reportes", url: "/reportes", icon: FileText },
   { title: "Configuración", url: "/configuracion", icon: Settings },
   { title: "Config. Cooperativa", url: "/configuracion-cooperativa", icon: Building },
+  { title: "Tema", url: "/configuracion-tema", icon: Palette },
 ];
 
 export function AppSidebar() {

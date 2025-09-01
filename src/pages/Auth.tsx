@@ -54,7 +54,12 @@ const Auth = () => {
     
     try {
       const { email, password, ...userData } = signupData;
-      await signUp(email, password, userData);
+      const { error } = await signUp(email, password, userData);
+      
+      if (!error) {
+        // For new users registering themselves, they only get client role
+        // Additional roles must be requested through administrators
+      }
     } finally {
       setIsLoading(false);
     }

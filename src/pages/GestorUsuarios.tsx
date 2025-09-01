@@ -6,6 +6,7 @@ import { Badge } from "@/components/ui/badge";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
 import { Label } from "@/components/ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { Checkbox } from "@/components/ui/checkbox";
 import { supabase } from '@/integrations/supabase/client';
 import { useToast } from '@/hooks/use-toast';
 import { useAuth } from '@/hooks/useAuth';
@@ -47,7 +48,7 @@ const GestorUsuarios = () => {
     id_number: '',
     phone: '',
     address: '',
-    role: 'client'
+    roles: ['client'] as string[]
   });
   const [isLoadingUserData, setIsLoadingUserData] = useState(false);
   const [userDataLoaded, setUserDataLoaded] = useState(false);
@@ -100,7 +101,8 @@ const GestorUsuarios = () => {
     e.preventDefault();
     
     try {
-      // Use admin signup function to avoid email confirmation and handle duplicates
+      // Create user with first role
+      const primaryRole = formData.roles[0] || 'client';
       const { data, error } = await supabase.functions.invoke('admin-signup', {
         body: {
           email: formData.email,
@@ -112,7 +114,7 @@ const GestorUsuarios = () => {
           id_number: formData.id_number,
           phone: formData.phone,
           address: formData.address,
-          role: formData.role
+          role: primaryRole
         }
       });
 
@@ -121,9 +123,22 @@ const GestorUsuarios = () => {
         throw new Error(error.message || 'Error al crear el usuario');
       }
 
-      // For seguridad: si la función responde 200 pero con payload de error
       if (data && (data as any).error) {
         throw new Error((data as any).error);
+      }
+
+      // If user has multiple roles, add the additional ones
+      if (formData.roles.length > 1 && data?.user) {
+        const additionalRoles = formData.roles.slice(1);
+        
+        for (const role of additionalRoles) {
+          await supabase
+            .from('user_roles')
+            .insert({
+              user_id: data.user.id,
+              role: role as any
+            });
+        }
       }
       
       toast({
@@ -216,7 +231,7 @@ const GestorUsuarios = () => {
           id_number: userData.id_number || '',
           phone: userData.phone || '',
           address: userData.address || '',
-          role: userData.role || 'client'
+          roles: userData.role ? [userData.role] : ['client']
         });
         setUserDataLoaded(true);
         
@@ -268,7 +283,7 @@ const GestorUsuarios = () => {
       id_number: '',
       phone: '',
       address: '',
-      role: 'client'
+      roles: ['client']
     });
     setUserDataLoaded(false);
   };
@@ -277,6 +292,31 @@ const GestorUsuarios = () => {
     setSelectedUser(user);
     setNewUserRole('client'); // Default to client role
     setIsRoleDialogOpen(true);
+  };
+
+  const availableRoles = [
+    { value: 'client', label: 'Cliente' },
+    { value: 'driver', label: 'Conductor' },
+    { value: 'partner', label: 'Socio' },
+    { value: 'employee', label: 'Empleado' },
+    { value: 'official', label: 'Dirigente' },
+    { value: 'manager', label: 'Manager' },
+    { value: 'president', label: 'Presidente' },
+    { value: 'administrator', label: 'Administrador' }
+  ];
+
+  const handleRoleToggle = (roleValue: string, checked: boolean) => {
+    if (checked) {
+      setFormData({
+        ...formData,
+        roles: [...formData.roles, roleValue]
+      });
+    } else {
+      setFormData({
+        ...formData,
+        roles: formData.roles.filter(r => r !== roleValue)
+      });
+    }
   };
 
   const getRoleDisplayName = (role: string) => {
@@ -485,21 +525,27 @@ const GestorUsuarios = () => {
                 </div>
                 
                 <div className="space-y-2">
-                  <Label htmlFor="role">Rol</Label>
-                  <Select value={formData.role} onValueChange={(value) => setFormData({...formData, role: value})}>
-                    <SelectTrigger>
-                      <SelectValue />
-                    </SelectTrigger>
-                    <SelectContent>
-                      <SelectItem value="client">Cliente</SelectItem>
-                      <SelectItem value="driver">Conductor</SelectItem>
-                      <SelectItem value="partner">Socio</SelectItem>
-                      <SelectItem value="employee">Empleado</SelectItem>
-                      <SelectItem value="official">Dirigente</SelectItem>
-                      <SelectItem value="manager">Manager</SelectItem>
-                      <SelectItem value="administrator">Administrador</SelectItem>
-                    </SelectContent>
-                  </Select>
+                  <Label>Roles del Usuario</Label>
+                  <div className="grid grid-cols-2 gap-3 max-h-40 overflow-y-auto p-3 border rounded-md">
+                    {availableRoles.map((role) => (
+                      <div key={role.value} className="flex items-center space-x-2">
+                        <Checkbox
+                          id={role.value}
+                          checked={formData.roles.includes(role.value)}
+                          onCheckedChange={(checked) => handleRoleToggle(role.value, !!checked)}
+                        />
+                        <Label 
+                          htmlFor={role.value} 
+                          className="text-sm font-normal cursor-pointer"
+                        >
+                          {role.label}
+                        </Label>
+                      </div>
+                    ))}
+                  </div>
+                  <p className="text-xs text-muted-foreground">
+                    Selecciona uno o más roles para este usuario
+                  </p>
                 </div>
                 
                 <div className="flex justify-end gap-2">

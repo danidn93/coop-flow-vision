@@ -1,12 +1,15 @@
 import { useState, useEffect } from 'react';
 import { SidebarTrigger } from "@/components/ui/sidebar";
-import { Clock, Calendar } from "lucide-react";
+import { Clock, Calendar, UserPlus } from "lucide-react";
 import { format } from 'date-fns';
 import { es } from 'date-fns/locale';
 import { RoleSwitcher } from '@/components/role-switcher';
+import { RoleRequestModal } from '@/components/role-request-modal';
+import { Button } from "@/components/ui/button";
 
 export function DashboardHeader() {
   const [currentTime, setCurrentTime] = useState(new Date());
+  const [isRoleRequestOpen, setIsRoleRequestOpen] = useState(false);
 
   useEffect(() => {
     const timer = setInterval(() => {
@@ -36,9 +39,22 @@ export function DashboardHeader() {
             </div>
           </div>
         </div>
-        <div className="flex items-center">
+        <div className="flex items-center gap-2">
+          <Button
+            variant="outline"
+            size="sm"
+            onClick={() => setIsRoleRequestOpen(true)}
+          >
+            <UserPlus className="h-4 w-4 mr-2" />
+            Solicitar Roles
+          </Button>
           <RoleSwitcher />
         </div>
+        
+        <RoleRequestModal 
+          isOpen={isRoleRequestOpen} 
+          onClose={() => setIsRoleRequestOpen(false)} 
+        />
       </div>
     </header>
   );

@@ -15,6 +15,7 @@ import GestorRutas from "./pages/GestorRutas";
 import GestorFrecuencias from "./pages/GestorFrecuencias";
 import Recompensas from "./pages/Recompensas";
 import ConfiguracionCooperativa from "./pages/ConfiguracionCooperativa";
+import ConfiguracionTema from "./pages/ConfiguracionTema";
 import ChatSoporte from "./pages/ChatSoporte";
 import ChatBuses from "./pages/ChatBuses";
 import Incidentes from "./pages/Incidentes";
@@ -129,6 +130,13 @@ const App = () => (
               <ProtectedRoute>
                 <DashboardLayout>
                   <Configuracion />
+                </DashboardLayout>
+              </ProtectedRoute>
+            } />
+            <Route path="/configuracion-tema" element={
+              <ProtectedRoute>
+                <DashboardLayout>
+                  <ConfiguracionTema />
                 </DashboardLayout>
               </ProtectedRoute>
             } />
