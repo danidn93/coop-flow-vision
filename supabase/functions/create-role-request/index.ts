@@ -30,7 +30,7 @@ const handler = async (req: Request): Promise<Response> => {
   }
 
   try {
-    // Create supabase client
+    // Create supabase client (for auth)
     const supabase = createClient(
       Deno.env.get('SUPABASE_URL') ?? '',
       Deno.env.get('SUPABASE_ANON_KEY') ?? ''
@@ -62,6 +62,13 @@ const handler = async (req: Request): Promise<Response> => {
       );
     }
 
+    // Create an authenticated client for RLS-aware queries
+    const supabaseAuthed = createClient(
+      Deno.env.get('SUPABASE_URL') ?? '',
+      Deno.env.get('SUPABASE_ANON_KEY') ?? '',
+      { global: { headers: { Authorization: authHeader } } }
+    );
+
     // Parse request body
     const requestData: RoleRequestData = await req.json();
 
@@ -77,7 +84,7 @@ const handler = async (req: Request): Promise<Response> => {
     }
 
     // Get user profile for notification
-    const { data: userProfile, error: profileError } = await supabase
+    const { data: userProfile, error: profileError } = await supabaseAuthed
       .from('profiles')
       .select('first_name, surname_1')
       .eq('user_id', user.id)
@@ -99,7 +106,7 @@ const handler = async (req: Request): Promise<Response> => {
     }
 
     // Get all administrators to notify
-    const { data: adminRoles, error: adminRolesError } = await supabase
+    const { data: adminRoles, error: adminRolesError } = await supabaseAuthed
       .from('user_roles')
       .select('user_id')
       .eq('role', 'administrator');
@@ -117,7 +124,7 @@ const handler = async (req: Request): Promise<Response> => {
 
     // Create role request records for each requested role
     const roleRequestPromises = requestData.requested_roles.map(async (role) => {
-      const { error: roleRequestError } = await supabase
+      const { error: roleRequestError } = await supabaseAuthed
         .from('role_requests')
         .insert({
           requester_id: user.id,
@@ -153,7 +160,7 @@ const handler = async (req: Request): Promise<Response> => {
     const userName = userProfile ? `${userProfile.first_name} ${userProfile.surname_1}` : user.email;
     
     for (const adminRole of adminRoles) {
-      const { error: notificationError } = await supabase
+      const { error: notificationError } = await supabaseAuthed
         .from('notifications')
         .insert({
           user_id: adminRole.user_id,

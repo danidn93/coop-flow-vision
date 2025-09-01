@@ -30,7 +30,7 @@ const handler = async (req: Request): Promise<Response> => {
   }
 
   try {
-    // Create supabase client
+    // Create supabase client (for auth)
     const supabase = createClient(
       Deno.env.get('SUPABASE_URL') ?? '',
       Deno.env.get('SUPABASE_ANON_KEY') ?? ''
@@ -79,6 +79,13 @@ const handler = async (req: Request): Promise<Response> => {
       );
     }
 
+    // Create an authenticated client for RLS-aware queries
+    const supabaseAuthed = createClient(
+      Deno.env.get('SUPABASE_URL') ?? '',
+      Deno.env.get('SUPABASE_ANON_KEY') ?? '',
+      { global: { headers: { Authorization: authHeader } } }
+    );
+
     // Parse request body
     const requestData: ApprovalData = await req.json();
 
@@ -93,11 +100,11 @@ const handler = async (req: Request): Promise<Response> => {
     }
 
     // Get the role request
-    const { data: roleRequest, error: fetchError } = await supabase
+    const { data: roleRequest, error: fetchError } = await supabaseAuthed
       .from('role_requests')
       .select('requester_id, requested_role, status')
       .eq('id', requestData.request_id)
-      .single();
+      .maybeSingle();
 
     if (fetchError || !roleRequest) {
       return new Response(
@@ -120,7 +127,7 @@ const handler = async (req: Request): Promise<Response> => {
     }
 
     // Update the role request status
-    const { error: updateError } = await supabase
+    const { error: updateError } = await supabaseAuthed
       .from('role_requests')
       .update({
         status: requestData.action === 'approve' ? 'approved' : 'rejected',
@@ -143,7 +150,7 @@ const handler = async (req: Request): Promise<Response> => {
 
     // If approved, add the role to the user
     if (requestData.action === 'approve') {
-      const { error: roleAssignError } = await supabase
+      const { error: roleAssignError } = await supabaseAuthed
         .from('user_roles')
         .insert({
           user_id: roleRequest.requester_id,
@@ -174,7 +181,7 @@ const handler = async (req: Request): Promise<Response> => {
     const title = `Solicitud de Rol ${requestData.action === 'approve' ? 'Aprobada' : 'Rechazada'}`;
     const message = `Tu solicitud para el rol de ${roleName} ha sido ${statusText}.${requestData.notes ? ` Notas: ${requestData.notes}` : ''}`;
 
-    const { error: notificationError } = await supabase
+    const { error: notificationError } = await supabaseAuthed
       .from('notifications')
       .insert({
         user_id: roleRequest.requester_id,
