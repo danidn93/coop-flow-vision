@@ -102,8 +102,12 @@ const Usuarios = () => {
     const stats = {
       total: users.length,
       administrator: 0,
-      driver: 0,
+      president: 0,
+      manager: 0,
+      employee: 0,
       partner: 0,
+      driver: 0,
+      official: 0,
       client: 0
     };
 
@@ -148,7 +152,7 @@ const Usuarios = () => {
         </div>
       </div>
 
-      <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
+      <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-5">
         <Card>
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
             <CardTitle className="text-sm font-medium">Total Usuarios</CardTitle>
@@ -170,7 +174,61 @@ const Usuarios = () => {
           <CardContent>
             <div className="text-2xl font-bold">{stats.administrator}</div>
             <p className="text-xs text-muted-foreground">
-              Usuarios administradores
+              Administradores
+            </p>
+          </CardContent>
+        </Card>
+
+        <Card>
+          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+            <CardTitle className="text-sm font-medium">Presidentes</CardTitle>
+            <Shield className="h-4 w-4 text-muted-foreground" />
+          </CardHeader>
+          <CardContent>
+            <div className="text-2xl font-bold">{stats.president}</div>
+            <p className="text-xs text-muted-foreground">
+              Presidentes
+            </p>
+          </CardContent>
+        </Card>
+
+        <Card>
+          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+            <CardTitle className="text-sm font-medium">Managers</CardTitle>
+            <Users className="h-4 w-4 text-muted-foreground" />
+          </CardHeader>
+          <CardContent>
+            <div className="text-2xl font-bold">{stats.manager}</div>
+            <p className="text-xs text-muted-foreground">
+              Managers
+            </p>
+          </CardContent>
+        </Card>
+
+        <Card>
+          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+            <CardTitle className="text-sm font-medium">Empleados</CardTitle>
+            <Users className="h-4 w-4 text-muted-foreground" />
+          </CardHeader>
+          <CardContent>
+            <div className="text-2xl font-bold">{stats.employee}</div>
+            <p className="text-xs text-muted-foreground">
+              Empleados
+            </p>
+          </CardContent>
+        </Card>
+      </div>
+
+      <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
+        <Card>
+          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+            <CardTitle className="text-sm font-medium">Socios</CardTitle>
+            <Users className="h-4 w-4 text-muted-foreground" />
+          </CardHeader>
+          <CardContent>
+            <div className="text-2xl font-bold">{stats.partner}</div>
+            <p className="text-xs text-muted-foreground">
+              Socios
             </p>
           </CardContent>
         </Card>
@@ -183,20 +241,33 @@ const Usuarios = () => {
           <CardContent>
             <div className="text-2xl font-bold">{stats.driver}</div>
             <p className="text-xs text-muted-foreground">
-              Conductores activos
+              Conductores
             </p>
           </CardContent>
         </Card>
 
         <Card>
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium">Socios</CardTitle>
+            <CardTitle className="text-sm font-medium">Dirigentes</CardTitle>
             <Users className="h-4 w-4 text-muted-foreground" />
           </CardHeader>
           <CardContent>
-            <div className="text-2xl font-bold">{stats.partner}</div>
+            <div className="text-2xl font-bold">{stats.official}</div>
             <p className="text-xs text-muted-foreground">
-              Socios de la cooperativa
+              Dirigentes
+            </p>
+          </CardContent>
+        </Card>
+
+        <Card>
+          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+            <CardTitle className="text-sm font-medium">Clientes</CardTitle>
+            <Users className="h-4 w-4 text-muted-foreground" />
+          </CardHeader>
+          <CardContent>
+            <div className="text-2xl font-bold">{stats.client}</div>
+            <p className="text-xs text-muted-foreground">
+              Clientes
             </p>
           </CardContent>
         </Card>
