@@ -28,6 +28,8 @@ import Configuracion from "./pages/Configuracion";
 import NotFound from "./pages/NotFound";
 import ProtectedRoute from "./components/ProtectedRoute";
 
+// Force rebuild to fix import issue
+
 const queryClient = new QueryClient();
 
 const DashboardLayout = ({ children }: { children: React.ReactNode }) => (
