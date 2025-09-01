@@ -1,7 +1,7 @@
 import { NavLink, useLocation } from "react-router-dom";
 import { 
   Home, Users, MapPin, Settings, FileText, Bus, 
-  Calendar, Clock, LogOut, UserCheck, MessageSquare, MessageCircle, AlertTriangle, Gift, Building, Palette
+  Calendar, Clock, LogOut, UserCheck, MessageSquare, MessageCircle, AlertTriangle, Gift, Building, Palette, UserPlus
 } from "lucide-react";
 import {
   Sidebar,
@@ -23,6 +23,7 @@ import { useAuth } from "@/hooks/useAuth";
 const menuItems = [
   { title: "Inicio", url: "/", icon: Home },
   { title: "Usuarios", url: "/usuarios", icon: Users },
+  { title: "Solicitudes de Roles", url: "/solicitudes-roles", icon: UserPlus },
   { title: "Buses", url: "/buses", icon: Bus },
   { title: "Rutas", url: "/rutas", icon: MapPin },
   { title: "Frecuencias", url: "/gestor-frecuencias", icon: Clock },

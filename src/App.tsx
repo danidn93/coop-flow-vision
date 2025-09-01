@@ -16,6 +16,7 @@ import GestorFrecuencias from "./pages/GestorFrecuencias";
 import Recompensas from "./pages/Recompensas";
 import ConfiguracionCooperativa from "./pages/ConfiguracionCooperativa";
 import ConfiguracionTema from "./pages/ConfiguracionTema";
+import SolicitudesRoles from "./pages/SolicitudesRoles";
 import ChatSoporte from "./pages/ChatSoporte";
 import ChatBuses from "./pages/ChatBuses";
 import Incidentes from "./pages/Incidentes";
@@ -133,10 +134,17 @@ const App = () => (
                 </DashboardLayout>
               </ProtectedRoute>
             } />
-            <Route path="/configuracion-tema" element={
+            <Route path="/configuracion/tema" element={
               <ProtectedRoute allowedRoles={['administrator']}>
                 <DashboardLayout>
                   <ConfiguracionTema />
+                </DashboardLayout>
+              </ProtectedRoute>
+            } />
+            <Route path="/solicitudes-roles" element={
+              <ProtectedRoute allowedRoles={['administrator']}>
+                <DashboardLayout>
+                  <SolicitudesRoles />
                 </DashboardLayout>
               </ProtectedRoute>
             } />

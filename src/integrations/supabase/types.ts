@@ -502,6 +502,42 @@ export type Database = {
         }
         Relationships: []
       }
+      role_requests: {
+        Row: {
+          created_at: string
+          id: string
+          justification: string
+          notes: string | null
+          requested_role: Database["public"]["Enums"]["app_role"]
+          requester_id: string
+          reviewed_at: string | null
+          reviewed_by: string | null
+          status: string
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          justification: string
+          notes?: string | null
+          requested_role: Database["public"]["Enums"]["app_role"]
+          requester_id: string
+          reviewed_at?: string | null
+          reviewed_by?: string | null
+          status?: string
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          justification?: string
+          notes?: string | null
+          requested_role?: Database["public"]["Enums"]["app_role"]
+          requester_id?: string
+          reviewed_at?: string | null
+          reviewed_by?: string | null
+          status?: string
+        }
+        Relationships: []
+      }
       route_frequencies: {
         Row: {
           arrival_time: string

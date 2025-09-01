@@ -1,10 +1,12 @@
 import { useState, useEffect } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Alert, AlertDescription } from "@/components/ui/alert";
-import { Gift, Star, Bell, TrendingUp } from "lucide-react";
+import { Gift, Star, Bell, TrendingUp, UserPlus } from "lucide-react";
 import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from '@/hooks/useAuth';
+import { RoleRequestModal } from './role-request-modal';
 
 interface UserStats {
   totalPoints: number;
@@ -24,6 +26,7 @@ export function ClientDashboard() {
     availableRewards: []
   });
   const [loading, setLoading] = useState(true);
+  const [isRoleModalOpen, setIsRoleModalOpen] = useState(false);
 
   useEffect(() => {
     if (user) {
@@ -81,14 +84,31 @@ export function ClientDashboard() {
                 <div className="h-3 bg-muted rounded w-32"></div>
               </CardContent>
             </Card>
-          ))}
-        </div>
+        ))}
       </div>
+    </div>
     );
   }
 
   return (
     <div className="space-y-6">
+      <div className="flex justify-between items-start mb-6">
+        <div>
+          <h1 className="text-3xl font-bold tracking-tight">Panel del Cliente</h1>
+          <p className="text-muted-foreground">
+            Bienvenido. Aquí puedes ver tus puntos y recompensas.
+          </p>
+        </div>
+        <Button 
+          onClick={() => setIsRoleModalOpen(true)}
+          variant="outline"
+          className="flex items-center gap-2"
+        >
+          <UserPlus className="h-4 w-4" />
+          Solicitar Roles Adicionales
+        </Button>
+      </div>
+
       {/* Alert for available rewards */}
       {stats.availableRewards.length > 0 && (
         <Alert className="border-amber-200 bg-amber-50 dark:border-amber-800 dark:bg-amber-950/50">
@@ -206,6 +226,11 @@ export function ClientDashboard() {
           </Card>
         )}
       </div>
+
+      <RoleRequestModal 
+        isOpen={isRoleModalOpen} 
+        onClose={() => setIsRoleModalOpen(false)} 
+      />
     </div>
   );
 }

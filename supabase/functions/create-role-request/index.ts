@@ -111,6 +111,25 @@ const handler = async (req: Request): Promise<Response> => {
       );
     }
 
+    // Create role request records for each requested role
+    const roleRequestPromises = requestData.requested_roles.map(async (role) => {
+      const { error: roleRequestError } = await supabase
+        .from('role_requests')
+        .insert({
+          requester_id: user.id,
+          requested_role: role,
+          justification: requestData.justification,
+          status: 'pending'
+        });
+
+      if (roleRequestError) {
+        console.error('Error creating role request:', roleRequestError);
+        throw roleRequestError;
+      }
+    });
+
+    await Promise.all(roleRequestPromises);
+
     // Create notifications for all administrators
     const roleNames = {
       administrator: 'Administrador',
