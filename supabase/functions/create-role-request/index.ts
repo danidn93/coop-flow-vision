@@ -81,7 +81,7 @@ const handler = async (req: Request): Promise<Response> => {
       .from('profiles')
       .select('first_name, surname_1')
       .eq('user_id', user.id)
-      .single();
+      .maybeSingle();
 
     if (profileError) {
       console.error('Error fetching user profile:', profileError);
@@ -89,6 +89,17 @@ const handler = async (req: Request): Promise<Response> => {
         JSON.stringify({ error: 'Error obteniendo perfil de usuario' }),
         {
           status: 500,
+          headers: { 'Content-Type': 'application/json', ...corsHeaders }
+        }
+      );
+    }
+
+    if (!userProfile) {
+      console.error('User profile not found for user:', user.id);
+      return new Response(
+        JSON.stringify({ error: 'Perfil de usuario no encontrado. Contacta al administrador.' }),
+        {
+          status: 404,
           headers: { 'Content-Type': 'application/json', ...corsHeaders }
         }
       );
