@@ -41,12 +41,10 @@ const RoleSelector: React.FC<RoleSelectorProps> = ({ userEmail, onRoleSelected, 
 
   const loadUserRoles = async () => {
     try {
-      // Get user ID from auth with email - using client auth instead of admin
+      // Get current authenticated user
       const { data: { user: currentUser }, error: currentUserError } = await supabase.auth.getUser();
       if (currentUserError) throw currentUserError;
 
-      // Since we can't use admin.listUsers in client code, we'll need to work with the authenticated user
-      // For now, let's get roles for the current authenticated user (this logic may need adjustment)
       let userId = currentUser?.id;
 
       if (!userId) {
@@ -74,6 +72,12 @@ const RoleSelector: React.FC<RoleSelectorProps> = ({ userEmail, onRoleSelected, 
           variant: "destructive",
         });
         onCancel();
+        return;
+      }
+
+      // If user has only one role, select it automatically
+      if (rolesData.length === 1) {
+        onRoleSelected(rolesData[0].role);
         return;
       }
 
@@ -172,8 +176,7 @@ const RoleSelector: React.FC<RoleSelectorProps> = ({ userEmail, onRoleSelected, 
 
     setValidating(role);
     try {
-      // Here you would typically store the selected role in localStorage or context
-      localStorage.setItem('selectedRole', role);
+      // Store the selected role and trigger role switch in auth context
       onRoleSelected(role);
       
       toast({

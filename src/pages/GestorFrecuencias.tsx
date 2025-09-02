@@ -468,26 +468,26 @@ const GestorFrecuencias = () => {
                               <span className="text-sm">
                                 {frequency.buses.alias} ({frequency.buses.plate})
                               </span>
-                              {frequency.terminal_operations && frequency.terminal_operations.length > 0 && (
-                                <div className="flex items-center space-x-4 ml-4">
-                                  <div className="flex items-center space-x-1">
-                                    <Users className="h-3 w-3" />
-                                    <span className="text-xs">
-                                      {frequency.terminal_operations.reduce((sum, op) => sum + op.passengers_count, 0)} pax
-                                    </span>
-                                  </div>
-                                  <div className="flex items-center space-x-1">
-                                    <span className="text-xs">$</span>
-                                    <span className="text-xs">
-                                      {frequency.terminal_operations.reduce((sum, op) => sum + op.revenue, 0).toFixed(2)}
-                                    </span>
-                                  </div>
-                                  <div className="flex items-center space-x-1">
-                                    <MapPin className="h-3 w-3" />
-                                    <span className="text-xs">{frequency.terminal_operations.length} terminales</span>
-                                  </div>
-                                </div>
-                              )}
+                               {frequency.terminal_operations && frequency.terminal_operations.length > 0 && (
+                                 <div className="flex items-center space-x-4 ml-4">
+                                   <div className="flex items-center space-x-1">
+                                     <Users className="h-3 w-3" />
+                                     <span className="text-xs">
+                                       {frequency.terminal_operations.reduce((sum, op) => sum + (Number(op.passengers_count) || 0), 0)} pax
+                                     </span>
+                                   </div>
+                                   <div className="flex items-center space-x-1">
+                                     <span className="text-xs">$</span>
+                                     <span className="text-xs">
+                                       {frequency.terminal_operations.reduce((sum, op) => sum + (Number(op.revenue) || 0), 0).toFixed(2)}
+                                     </span>
+                                   </div>
+                                   <div className="flex items-center space-x-1">
+                                     <MapPin className="h-3 w-3" />
+                                     <span className="text-xs">{frequency.terminal_operations.length} terminales</span>
+                                   </div>
+                                 </div>
+                               )}
                             </div>
                           ) : (
                             <div className="flex items-center space-x-2 text-muted-foreground">

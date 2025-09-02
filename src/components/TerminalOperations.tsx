@@ -271,8 +271,8 @@ const TerminalOperations: React.FC<TerminalOperationsProps> = ({ frequency, onUp
     }
   };
 
-  const totalPassengers = operations.reduce((sum, op) => sum + op.passengers_count, 0);
-  const totalRevenue = operations.reduce((sum, op) => sum + op.revenue, 0);
+  const totalPassengers = operations.reduce((sum, op) => sum + (Number(op.passengers_count) || 0), 0);
+  const totalRevenue = operations.reduce((sum, op) => sum + (Number(op.revenue) || 0), 0);
 
   return (
     <div className="space-y-4">
@@ -315,16 +315,16 @@ const TerminalOperations: React.FC<TerminalOperationsProps> = ({ frequency, onUp
                           {operation.terminals.location}
                         </span>
                       )}
-                      <div className="flex items-center gap-4 text-sm text-muted-foreground">
-                        <div className="flex items-center gap-1">
-                          <Users className="h-3 w-3" />
-                          <span>{operation.passengers_count} pasajeros</span>
-                        </div>
-                        <div className="flex items-center gap-1">
-                          <DollarSign className="h-3 w-3" />
-                          <span>${operation.revenue.toFixed(2)}</span>
-                        </div>
-                      </div>
+                       <div className="flex items-center gap-4 text-sm text-muted-foreground">
+                         <div className="flex items-center gap-1">
+                           <Users className="h-3 w-3" />
+                           <span>{Number(operation.passengers_count) || 0} pasajeros</span>
+                         </div>
+                         <div className="flex items-center gap-1">
+                           <DollarSign className="h-3 w-3" />
+                           <span>${(Number(operation.revenue) || 0).toFixed(2)}</span>
+                         </div>
+                       </div>
                     </div>
                   </div>
                   

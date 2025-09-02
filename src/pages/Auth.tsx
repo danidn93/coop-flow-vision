@@ -7,10 +7,12 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/com
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { useAuth } from '@/hooks/useAuth';
 import { Loader2 } from 'lucide-react';
+import RoleSelector from '@/components/RoleSelector';
 
 const Auth = () => {
-  const { user, signIn, signUp, loading } = useAuth();
+  const { user, signIn, signUp, loading, userRoles, switchRole } = useAuth();
   const [isLoading, setIsLoading] = useState(false);
+  const [showRoleSelector, setShowRoleSelector] = useState(false);
 
   // Login form state
   const [loginEmail, setLoginEmail] = useState('');
@@ -29,6 +31,29 @@ const Auth = () => {
     address: ''
   });
 
+  // Show role selector if user is authenticated but hasn't selected a role
+  if (user && !loading && userRoles.length > 1 && showRoleSelector) {
+    return (
+      <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-primary/5 to-accent/5 py-12 px-4">
+        <RoleSelector
+          userEmail={user.email || ''}
+          onRoleSelected={(role) => {
+            switchRole(role);
+            setShowRoleSelector(false);
+            // Allow time for auth context to update
+            setTimeout(() => {
+              window.location.href = '/';
+            }, 500);
+          }}
+          onCancel={() => {
+            setShowRoleSelector(false);
+            window.location.href = '/';
+          }}
+        />
+      </div>
+    );
+  }
+
   // Redirect if already authenticated
   if (user && !loading) {
     return <Navigate to="/" replace />;
@@ -41,7 +66,19 @@ const Auth = () => {
     try {
       const { error } = await signIn(loginEmail, loginPassword);
       if (!error) {
-        window.location.href = '/';
+        // Check if user has multiple roles after login
+        setTimeout(() => {
+          // Get userRoles from auth context first 
+          const checkRoles = () => {
+            if (userRoles && userRoles.length > 1) {
+              setShowRoleSelector(true);
+            } else {
+              window.location.href = '/';
+            }
+          };
+          
+          setTimeout(checkRoles, 1500); // Wait for auth context to load roles
+        }, 500);
       }
     } finally {
       setIsLoading(false);
