@@ -1128,6 +1128,12 @@ export type Database = {
         Args: Record<PropertyKey, never>
         Returns: Database["public"]["Enums"]["app_role"]
       }
+      get_user_roles_by_email: {
+        Args: { user_email: string }
+        Returns: {
+          role: Database["public"]["Enums"]["app_role"]
+        }[]
+      }
       has_role: {
         Args: {
           _role: Database["public"]["Enums"]["app_role"]
